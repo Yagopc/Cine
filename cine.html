@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video incrustado de OK.ru</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* Relación de aspecto 16:9 */
+            height: 0;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video de OK.ru</h1>
+    
+    <div class="video-container">
+        <iframe src="https://ok.ru/videoembed/9657694620207" 
+                frameborder="0" 
+                allowfullscreen
+                allow="autoplay; fullscreen">
+        </iframe>
+    </div>
+    
+    <p>Este es un video incrustado desde la plataforma OK.ru.</p>
+</body>
+</html>
