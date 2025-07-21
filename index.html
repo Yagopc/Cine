@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head> 
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reproductor de Películas</title>
@@ -50,6 +50,12 @@
         }
         button.secondary:hover {
             background-color: #0b7dda;
+        }
+        button.update {
+            background-color: #ff9800;
+        }
+        button.update:hover {
+            background-color: #e68a00;
         }
         .modal {
             display: none;
@@ -129,6 +135,7 @@
             <button id="viewMoviesBtn">Ver Listado de Películas</button>
             <button id="saveMoviesBtn" class="secondary">Guardar a Archivo</button>
             <button id="loadMoviesBtn" class="secondary">Cargar desde Archivo</button>
+            <button id="updateMoviesBtn" class="update">Actualizar Películas</button>
         </div>
     </div>
 
@@ -178,6 +185,7 @@
         const viewMoviesBtn = document.getElementById('viewMoviesBtn');
         const saveMoviesBtn = document.getElementById('saveMoviesBtn');
         const loadMoviesBtn = document.getElementById('loadMoviesBtn');
+        const updateMoviesBtn = document.getElementById('updateMoviesBtn');
         const addMovieModal = document.getElementById('addMovieModal');
         const moviesListModal = document.getElementById('moviesListModal');
         const loadFileModal = document.getElementById('loadFileModal');
@@ -196,6 +204,7 @@
         viewMoviesBtn.addEventListener('click', showMoviesList);
         saveMoviesBtn.addEventListener('click', saveMoviesToFile);
         loadMoviesBtn.addEventListener('click', () => loadFileModal.style.display = 'block');
+        updateMoviesBtn.addEventListener('click', updateMoviesFromUrl);
         
         closeButtons.forEach(btn => {
             btn.addEventListener('click', function() {
@@ -362,6 +371,39 @@
             
             reader.readAsText(file);
         }
+        
+        function updateMoviesFromUrl() {
+            const url = 'https://yagopc.github.io/Cine/películas.json';
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('No se pudo cargar el archivo');
+                    }
+                    return response.json();
+                })
+                .then(loadedMovies => {
+                    if (!Array.isArray(loadedMovies)) {
+                        throw new Error('El archivo no contiene un array válido');
+                    }
+                    
+                    // Validar estructura básica de las películas
+                    const isValid = loadedMovies.every(movie => 
+                        movie.title && movie.url && movie.embedUrl
+                    );
+                    
+                    if (!isValid) {
+                        throw new Error('El archivo no tiene el formato correcto');
+                    }
+                    
+                    movies = loadedMovies;
+                    saveMoviesToStorage(movies);
+                    alert(`Se actualizaron ${movies.length} películas correctamente desde la URL`);
+                })
+                .catch(error => {
+                    alert('Error al cargar las películas: ' + error.message);
+                });
+        }
     </script>
 </body>
-    </html>
+</html>
