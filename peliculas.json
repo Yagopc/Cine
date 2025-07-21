@@ -54,11 +54,7 @@
     "url": "https://m.ok.ru/video/7554372274735",
     "embedUrl": "https://ok.ru/videoembed/7554372274735"
   },
-  {
-    "title": "El tiburón del pantano",
-    "url": "https://m.ok.ru/dk?st.cmd=movieLayer&st.retLoc=default&st.discType=MOVIE&st.mvId=7745719372335&st.stpos=chan_3&st.plog=-1%3B-1%3B0%3B&st.discId=7745719372335&_prevCmd=movieLayer&tkn=5670#lst#",
-    "embedUrl": "https://m.ok.ru/dk?st.cmd=movieLayer&st.retLoc=default&st.discType=MOVIE&st.mvId=7745719372335&st.stpos=chan_3&st.plog=-1%3B-1%3B0%3B&st.discId=7745719372335&_prevCmd=movieLayer&tkn=5670#lst#"
-  },
+ 
   {
     "title": "El único superviviente",
     "url": "https://m.ok.ru/video/7299250588207",
@@ -100,23 +96,25 @@
     "embedUrl": "https://ok.ru/videoembed/9775445051951"
   },
   {
-    "title": "La entidad",
-    "url": "https://m.ok.ru/video/9375364876847",
-    "embedUrl": "https://ok.ru/videoembed/9375364876847"
+    "title": "El entidad",
+    "url": "https://m.ok.ru/video/7282180557359",
+    "embedUrl": "https://ok.ru/videoembed/7282180557359"
   },
   {
     "title": "La extinción",
     "url": "https://m.ok.ru/video/9842333452847",
     "embedUrl": "https://ok.ru/videoembed/9842333452847"
   },
-  {
-    "title": "La furia",
-    "url": "https://m.ok.ru/dk?st.cmd=movieLayer&st.retLoc=friend&st.discType=MOVIE&st.mvId=10177328384559&st.plog=-1%3B-1%3B0%3B&st.discId=10177328384559&st.rtu=%2Fdk%3Fst.cmd%3DfriendMovies%26st.mode%3Down%26st.friendId%3D604744728879%26st.frwd%3Don%26st.page%3D1%26_prevCmd%3DfriendMovies%26tkn%3D1431&_prevCmd=friendMovies&tkn=5670#",
-    "embedUrl": "https://m.ok.ru/dk?st.cmd=movieLayer&st.retLoc=friend&st.discType=MOVIE&st.mvId=10177328384559&st.plog=-1%3B-1%3B0%3B&st.discId=10177328384559&st.rtu=%2Fdk%3Fst.cmd%3DfriendMovies%26st.mode%3Down%26st.friendId%3D604744728879%26st.frwd%3Don%26st.page%3D1%26_prevCmd%3DfriendMovies%26tkn%3D1431&_prevCmd=friendMovies&tkn=5670#"
-  },
+  { "title": "La furia",
+  "url": "https://m.ok.ru/video/10177328384559",
+  "embedUrl": "https://ok.ru/videoembed/10177328384559"},  
+  
+
+    
+    
   {
     "title": "La guía del autoestopista galáctico",
-    "url": "https://m.ok.ru/video/7585417660975?st._aid=VideoState_open_album",
+    "url": "https://m.ok.ru/video/7585417660975",
     "embedUrl": "https://ok.ru/videoembed/7585417660975"
   },
   {
@@ -141,12 +139,12 @@
   },
   {
     "title": "La profecía del juicio final",
-    "url": "https://m.ok.ru/video/7742036576815?st._aid=VideoState_open_album",
+    "url": "https://m.ok.ru/video/7742036576815",
     "embedUrl": "https://ok.ru/videoembed/7742036576815"
   },
   {
     "title": "La tierra errante 2",
-    "url": "https://m.ok.ru/video/7847576734255?st._aid=VideoState_open_album",
+    "url": "https://m.ok.ru/video/7847576734255",
     "embedUrl": "https://ok.ru/videoembed/7847576734255"
   },
   {
@@ -196,7 +194,7 @@
   },
   {
     "title": "Proyecto dinosaurio",
-    "url": "https://m.ok.ru/video/7793925032495?st._aid=VideoState_open_album",
+    "url": "https://m.ok.ru/video/7793925032495",
     "embedUrl": "https://ok.ru/videoembed/7793925032495"
   },
   {
@@ -211,7 +209,7 @@
   },
   {
     "title": "Tenement",
-    "url": "https://m.ok.ru/video/8253813295663?st._aid=VideoState_open_album",
+    "url": "https://m.ok.ru/video/8253813295663",
     "embedUrl": "https://ok.ru/videoembed/8253813295663"
   },
   {
@@ -221,7 +219,7 @@
   },
   {
     "title": "Tierra marciana",
-    "url": "https://m.ok.ru/video/8185042045487?st._aid=VideoState_open_album",
+    "url": "https://m.ok.ru/video/8185042045487",
     "embedUrl": "https://ok.ru/videoembed/8185042045487"
   },
   {
@@ -231,9 +229,8 @@
   },
   {
     "title": "Viaja al centro de la tierra",
-    "url": "https://m.ok.ru/dk?st.cmd=movieLayer&st.retLoc=default&st.discType=MOVIE&st.mvId=2651077675666&st.stpos=chan_2&st.plog=-1%3B-1%3B0%3B&st.discId=2651077675666&_prevCmd=movieLayer&tkn=5461#lst#",
-    "embedUrl": "https://m.ok.ru/dk?st.cmd=movieLayer&st.retLoc=default&st.discType=MOVIE&st.mvId=2651077675666&st.stpos=chan_2&st.plog=-1%3B-1%3B0%3B&st.discId=2651077675666&_prevCmd=movieLayer&tkn=5461#lst#"
-  },
+    "url": "https://m.ok.ru/video/2651077675666",
+    "embedUrl": "https://ok.ru/videoembed/2651077675666"  },
   {
     "title": "Viaja al fondo del mar",
     "url": "https://m.ok.ru/video/7266309376559",
@@ -246,9 +243,10 @@
   },
   {
     "title": "Viajes sin retorno",
-    "url": "https://m.ok.ru/video/7554372274735",
-    "embedUrl": "https://ok.ru/videoembed/7554372274735"
+    "url": "https://m.ok.ru/video/7505414392367",
+    "embedUrl": "https://ok.ru/videoembed/7505414392367"
   },
+
   {
     "title": "Volcano",
     "url": "https://m.ok.ru/video/8859912636975",
@@ -268,10 +266,6 @@
     "title": "el tiburón del pantano",
     "url": "https://m.ok.ru/video/7745719372335",
     "embedUrl": "https://ok.ru/videoembed/7745719372335"
-  },{
-    "title": "cielo de medianoche",
-    "url": "https://m.ok.ru/video/7264331762223",
-    "embedUrl": "https://ok.ru/videoembed/7264331762223"
   },{
     "title": "criatura",
     "url": "https://m.ok.ru/video/2446109248146",
