@@ -7,20 +7,20 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
             background-color: #f5f5f5;
         }
         .container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 10px;
         }
         .player-container {
             width: 100%;
             aspect-ratio: 16/9;
             background-color: #000;
+            margin-bottom: 10px;
         }
         .player-container iframe {
             width: 100%;
@@ -30,17 +30,17 @@
         .buttons {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             flex-wrap: wrap;
         }
         button {
-            padding: 10px 15px;
+            padding: 8px 12px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
         }
         button:hover {
             background-color: #45a049;
@@ -62,19 +62,22 @@
             position: fixed;
             z-index: 1;
             left: 0;
-            top: 0;
+            top: 50%;
             width: 100%;
-            height: 100%;
+            height: 50%;
             background-color: rgba(0,0,0,0.4);
+            overflow: auto;
         }
         .modal-content {
             background-color: #fefefe;
-            margin: 15% auto;
+            margin: 0 auto;
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
             max-width: 500px;
             border-radius: 8px;
+            position: relative;
+            top: 10px;
         }
         .close {
             color: #aaa;
@@ -95,7 +98,7 @@
             border-radius: 4px;
         }
         .movie-list {
-            max-height: 400px;
+            max-height: 300px;
             overflow-y: auto;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -120,23 +123,10 @@
         .file-input-container {
             margin: 15px 0;
         }
-        .loading-message {
-            padding: 10px;
-            background: #ff9800;
-            color: white;
-            text-align: center;
-            margin-bottom: 10px;
-            border-radius: 4px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="loadingIndicator" class="loading-message" style="display: none;">
-            Cargando películas desde el servidor...
-        </div>
-        <h1>Reproductor de Películas</h1>
-        
         <div class="player-container">
             <iframe id="videoPlayer" src="" allowfullscreen></iframe>
         </div>
@@ -206,83 +196,59 @@
         const videoPlayer = document.getElementById('videoPlayer');
         const fileInput = document.getElementById('fileInput');
         const confirmLoadBtn = document.getElementById('confirmLoadBtn');
-        const loadingIndicator = document.getElementById('loadingIndicator');
         
-        // Variables de estado
-        let movies = [];
+        // Cargar películas al iniciar
+        let movies = loadMoviesFromStorage();
         
-        // Inicializar la aplicación al cargar la página
-        document.addEventListener('DOMContentLoaded', initializeApp);
-        
-        async function initializeApp() {
-            // Configurar event listeners
-            setupEventListeners();
-            
-            // 1. Primero cargar desde localStorage
-            const localMovies = loadMoviesFromStorage();
-            if (localMovies.length > 0) {
-                movies = localMovies;
-            }
-            
-            // 2. Siempre intentar cargar desde el servidor
-            loadingIndicator.style.display = 'block';
-            try {
-                await updateMoviesFromUrl('https://yagopc.github.io/Cine/peliculas.json');
-            } catch (error) {
-                console.error('Error al cargar películas:', error);
-                if (movies.length === 0) {
-                    alert('No se pudieron cargar las películas. Intenta más tarde.');
-                }
-            } finally {
-                loadingIndicator.style.display = 'none';
-            }
+        // Si no hay películas en el almacenamiento local, cargar desde el servidor
+        if (movies.length === 0) {
+            updateMoviesFromUrl();
         }
         
-        function setupEventListeners() {
-            addMovieBtn.addEventListener('click', () => addMovieModal.style.display = 'block');
-            viewMoviesBtn.addEventListener('click', showMoviesList);
-            saveMoviesBtn.addEventListener('click', saveMoviesToFile);
-            loadMoviesBtn.addEventListener('click', () => loadFileModal.style.display = 'block');
-            updateMoviesBtn.addEventListener('click', () => updateMoviesFromUrl('https://yagopc.github.io/Cine/peliculas.json'));
-            
-            closeButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.closest('.modal').style.display = 'none';
-                });
-            });
-            
-            window.addEventListener('click', (event) => {
-                if (event.target.className === 'modal') {
-                    event.target.style.display = 'none';
-                }
-            });
-            
-            movieForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const title = document.getElementById('movieTitle').value.trim();
-                const url = document.getElementById('movieUrl').value.trim();
-                
-                if (!isValidOkUrl(url)) {
-                    alert('Por favor, introduce una URL válida de OK.ru');
-                    return;
-                }
-                
-                const movie = {
-                    title: title,
-                    url: url,
-                    embedUrl: convertToEmbedUrl(url)
-                };
-                
-                addMovie(movie);
-                movieForm.reset();
-                addMovieModal.style.display = 'none';
-            });
-            
-            confirmLoadBtn.addEventListener('click', loadMoviesFromFile);
-        }
+        // Event listeners
+        addMovieBtn.addEventListener('click', () => addMovieModal.style.display = 'block');
+        viewMoviesBtn.addEventListener('click', showMoviesList);
+        saveMoviesBtn.addEventListener('click', saveMoviesToFile);
+        loadMoviesBtn.addEventListener('click', () => loadFileModal.style.display = 'block');
+        updateMoviesBtn.addEventListener('click', updateMoviesFromUrl);
         
-        // Funciones principales
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.modal').style.display = 'none';
+            });
+        });
+        
+        window.addEventListener('click', (event) => {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        });
+        
+        movieForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('movieTitle').value.trim();
+            const url = document.getElementById('movieUrl').value.trim();
+            
+            if (!isValidOkUrl(url)) {
+                alert('Por favor, introduce una URL válida de OK.ru');
+                return;
+            }
+            
+            const movie = {
+                title: title,
+                url: url,
+                embedUrl: convertToEmbedUrl(url)
+            };
+            
+            addMovie(movie);
+            movieForm.reset();
+            addMovieModal.style.display = 'none';
+        });
+        
+        confirmLoadBtn.addEventListener('click', loadMoviesFromFile);
+        
+        // Funciones
         function loadMoviesFromStorage() {
             const moviesFromStorage = localStorage.getItem('peliculas');
             return moviesFromStorage ? JSON.parse(moviesFromStorage) : [];
@@ -291,51 +257,6 @@
         function saveMoviesToStorage(moviesArray) {
             moviesArray.sort((a, b) => a.title.localeCompare(b.title));
             localStorage.setItem('peliculas', JSON.stringify(moviesArray));
-        }
-        
-        async function updateMoviesFromUrl(url) {
-            loadingIndicator.style.display = 'block';
-            updateMoviesBtn.disabled = true;
-            updateMoviesBtn.textContent = 'Cargando...';
-            
-            try {
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
-                }
-                
-                const loadedMovies = await response.json();
-                
-                if (!Array.isArray(loadedMovies)) {
-                    throw new Error('El archivo no contiene un array válido');
-                }
-                
-                // Validar estructura básica de las películas
-                const isValid = loadedMovies.every(movie => 
-                    movie.title && movie.url && movie.embedUrl
-                );
-                
-                if (!isValid) {
-                    throw new Error('El archivo no tiene el formato correcto');
-                }
-                
-                movies = loadedMovies;
-                saveMoviesToStorage(movies);
-                
-                // Mostrar mensaje solo si no es la carga inicial
-                if (updateMoviesBtn.textContent === 'Cargando...') {
-                    alert(`Se cargaron ${movies.length} películas correctamente`);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert(`Error al cargar películas: ${error.message}`);
-                throw error; // Re-lanzamos el error para que lo capture initializeApp
-            } finally {
-                loadingIndicator.style.display = 'none';
-                updateMoviesBtn.disabled = false;
-                updateMoviesBtn.textContent = 'Actualizar Películas';
-            }
         }
         
         function addMovie(movie) {
@@ -455,6 +376,39 @@
             };
             
             reader.readAsText(file);
+        }
+        
+        function updateMoviesFromUrl() {
+            const url = 'https://yagopc.github.io/Cine/peliculas.json';
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('No se pudo cargar el archivo');
+                    }
+                    return response.json();
+                })
+                .then(loadedMovies => {
+                    if (!Array.isArray(loadedMovies)) {
+                        throw new Error('El archivo no contiene un array válido');
+                    }
+                    
+                    // Validar estructura básica de las películas
+                    const isValid = loadedMovies.every(movie => 
+                        movie.title && movie.url && movie.embedUrl
+                    );
+                    
+                    if (!isValid) {
+                        throw new Error('El archivo no tiene el formato correcto');
+                    }
+                    
+                    movies = loadedMovies;
+                    saveMoviesToStorage(movies);
+                    alert(`Se actualizaron ${movies.length} películas correctamente desde la URL`);
+                })
+                .catch(error => {
+                    alert('Error al cargar las películas: ' + error.message);
+                });
         }
     </script>
 </body>
