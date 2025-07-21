@@ -247,7 +247,14 @@
             const moviesFromStorage = localStorage.getItem('peliculas');
             return moviesFromStorage ? JSON.parse(moviesFromStorage) : [];
         }
-        
+
+        function loadMoviesFromRemote() {
+    const remoteUrl = prompt("Introduce la URL del archivo JSON:", 
+                           "https://ejemplo.com/peliculas.json");
+    if (remoteUrl) {
+        updateMoviesFromUrl(remoteUrl); // Reutiliza tu función existente
+    }
+        }
         function saveMoviesToStorage(moviesArray) {
             moviesArray.sort((a, b) => a.title.localeCompare(b.title));
             localStorage.setItem('peliculas', JSON.stringify(moviesArray));
@@ -394,6 +401,7 @@
     };
     xhr.send();
         }
+        
     </script>
 </body>
 </html>
