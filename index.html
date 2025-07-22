@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor de Películas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --accent-color: #ff9800;
+            --dark-bg: #121212;
+            --darker-bg: #0a0a0a;
+            --light-bg: #1e1e1e;
+            --text-color: #f5f5f5;
+            --text-secondary: #aaaaaa;
+            --hover-color: #333;
+            --selected-color: #4CAF50;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--hover-color);
+        }
+        
+        .player-container {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background-color: #000;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        
+        .player-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.secondary {
+            background-color: var(--secondary-color);
+        }
+        
+        button.update {
+            background-color: var(--accent-color);
+        }
+        
+        button.danger {
+            background-color: #f44336;
+        }
+        
+        .search-container {
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto 15px;
+        }
+        
+        .search-container input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 25px;
+            border: none;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-container input:focus {
+            outline: 2px solid var(--primary-color);
+            border-color: transparent;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            overflow: auto;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: var(--light-bg);
+            margin: 5% auto;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.3s;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .close {
+            color: var(--text-secondary);
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .close:hover {
+            color: var(--text-color);
+        }
+        
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid var(--hover-color);
+            border-radius: 6px;
+            background-color: var(--darker-bg);
+            color: var(--text-color);
+            font-size: 14px;
+        }
+        
+        input[type="text"]:focus, input[type="file"]:focus {
+            outline: 2px solid var(--primary-color);
+            border-color: transparent;
+        }
+        
+        .movie-list-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin-top: 15px;
+        }
+        
+        .movie-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--hover-color);
+        }
+        
+        .movie-list-header h3 {
+            color: var(--primary-color);
+        }
+        
+        .movie-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 6px;
+            flex: 1;
+        }
+        
+        .movie-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .movie-list::-webkit-scrollbar-track {
+            background: var(--darker-bg);
+            border-radius: 4px;
+        }
+        
+        .movie-list::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+        
+        .movie-list::-webkit-scrollbar-thumb:hover {
+            background: #3d8b40;
+        }
+        
+        .movie-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--hover-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .movie-item:hover {
+            background-color: var(--hover-color);
+        }
+        
+        .movie-item.selected {
+            background-color: var(--selected-color);
+            color: white;
+        }
+        
+        .movie-item .title {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 10px;
+        }
+        
+        .movie-item .actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .movie-item .actions i {
+            font-size: 14px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        
+        .movie-item .actions i:hover {
+            opacity: 1;
+        }
+        
+        .no-movies {
+            padding: 30px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        
+        .file-input-container {
+            margin: 15px 0;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .movies-count-container {
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .platform-info {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: -8px;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Reproductor de Películas</h1>
+        </div>
+        
+        <div class="buttons">
+            <button id="addMovieBtn"><i class="fas fa-plus"></i> Añadir Película</button>
+            <button id="saveMoviesBtn" class="secondary"><i class="fas fa-save"></i> Guardar</button>
+            <button id="loadMoviesBtn" class="secondary"><i class="fas fa-folder-open"></i> Cargar</button>
+            <button id="updateMoviesBtn" class="update"><i class="fas fa-sync-alt"></i> Actualizar</button>
+        </div>
+        
+        <div class="player-container">
+            <iframe id="videoPlayer" src="" allowfullscreen></iframe>
+        </div>
+        
+        <div class="movies-count-container">
+            <span id="totalMoviesCount">0 películas en total</span> | 
+            <span id="filteredMoviesCount">0 coincidencias</span>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Buscar películas...">
+        </div>
+        
+        <div class="movie-list-container">
+            <div class="movie-list-header">
+                <h3><i class="fas fa-list"></i> Lista de Películas</h3>
+            </div>
+            
+            <div class="movie-list" id="moviesList">
+                <!-- Las películas se cargarán aquí -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para añadir película -->
+    <div id="addMovieModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-plus-circle"></i> Añadir Nueva Película</h2>
+            <form id="movieForm">
+                <label for="movieTitle">Título:</label>
+                <input type="text" id="movieTitle" required>
+                
+                <label for="movieUrl">URL del vídeo:</label>
+                <input type="text" id="movieUrl" placeholder="https://youtube.com/... o https://dailymotion.com/... o https://ok.ru/..." required>
+                <div class="platform-info">Soportado: YouTube, Dailymotion, OK.ru</div>
+                
+                <button type="submit"><i class="fas fa-save"></i> Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para cargar archivo -->
+    <div id="loadFileModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-folder-open"></i> Cargar Películas</h2>
+            <div class="file-input-container">
+                <input type="file" id="fileInput" accept=".json">
+            </div>
+            <button id="confirmLoadBtn"><i class="fas fa-check"></i> Cargar Películas</button>
+        </div>
+    </div>
+
+    <!-- Notificación -->
+    <div id="notification" class="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText">Operación completada</span>
+    </div>
+
+    <script>
+        // Elementos del DOM
+        const addMovieBtn = document.getElementById('addMovieBtn');
+        const saveMoviesBtn = document.getElementById('saveMoviesBtn');
+        const loadMoviesBtn = document.getElementById('loadMoviesBtn');
+        const updateMoviesBtn = document.getElementById('updateMoviesBtn');
+        const addMovieModal = document.getElementById('addMovieModal');
+        const loadFileModal = document.getElementById('loadFileModal');
+        const closeButtons = document.querySelectorAll('.close');
+        const movieForm = document.getElementById('movieForm');
+        const moviesList = document.getElementById('moviesList');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const fileInput = document.getElementById('fileInput');
+        const confirmLoadBtn = document.getElementById('confirmLoadBtn');
+        const searchInput = document.getElementById('searchInput');
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notificationText');
+        const totalMoviesCount = document.getElementById('totalMoviesCount');
+        const filteredMoviesCount = document.getElementById('filteredMoviesCount');
+        
+        // Variables de estado
+        let movies = [];
+        let currentSearch = '';
+        
+        // Inicializar la aplicación
+        initApp();
+        
+        // Event listeners
+        addMovieBtn.addEventListener('click', () => addMovieModal.style.display = 'block');
+        saveMoviesBtn.addEventListener('click', saveMoviesToFile);
+        loadMoviesBtn.addEventListener('click', () => loadFileModal.style.display = 'block');
+        updateMoviesBtn.addEventListener('click', updateMoviesFromUrl);
+        
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.modal').style.display = 'none';
+            });
+        });
+        
+        window.addEventListener('click', (event) => {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        });
+        
+        movieForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('movieTitle').value.trim();
+            const url = document.getElementById('movieUrl').value.trim();
+            
+            if (!isValidVideoUrl(url)) {
+                showNotification('Por favor, introduce una URL válida de YouTube, Dailymotion o OK.ru', 'error');
+                return;
+            }
+            
+            const movie = {
+                title: title,
+                url: url,
+                embedUrl: convertToEmbedUrl(url),
+                addedAt: new Date().toISOString(),
+                platform: detectPlatform(url)
+            };
+            
+            addMovie(movie);
+            movieForm.reset();
+            addMovieModal.style.display = 'none';
+            showNotification('Película añadida correctamente');
+        });
+        
+        confirmLoadBtn.addEventListener('click', loadMoviesFromFile);
+        
+        searchInput.addEventListener('input', function() {
+            currentSearch = this.value.toLowerCase();
+            renderMovies();
+        });
+        
+        // Funciones principales
+        function initApp() {
+            // Cargar películas al iniciar
+            movies = loadMoviesFromStorage();
+            
+            // Si no hay películas en el almacenamiento local, cargar desde el servidor
+            if (movies.length === 0) {
+                updateMoviesFromUrl();
+            } else {
+                renderMovies();
+            }
+        }
+        
+        function loadMoviesFromStorage() {
+            const moviesFromStorage = localStorage.getItem('peliculas');
+            if (moviesFromStorage) {
+                try {
+                    const parsedMovies = JSON.parse(moviesFromStorage);
+                    // Asegurarse de que todas las películas tengan la propiedad addedAt
+                    return parsedMovies.map(movie => {
+                        if (!movie.addedAt) {
+                            movie.addedAt = new Date().toISOString();
+                        }
+                        // Asegurar que las películas antiguas tengan la propiedad platform
+                        if (!movie.platform) {
+                            movie.platform = detectPlatform(movie.url);
+                        }
+                        return movie;
+                    });
+                } catch (e) {
+                    console.error('Error al parsear películas:', e);
+                    return [];
+                }
+            }
+            return [];
+        }
+        
+        function saveMoviesToStorage(moviesArray) {
+            moviesArray.sort((a, b) => a.title.localeCompare(b.title));
+            localStorage.setItem('peliculas', JSON.stringify(moviesArray));
+            updateMoviesCount();
+        }
+        
+        function addMovie(movie) {
+            // Verificar si la película ya existe
+            const exists = movies.some(m => m.url === movie.url);
+            if (exists) {
+                showNotification('Esta película ya está en tu lista', 'warning');
+                return;
+            }
+            
+            movies.push(movie);
+            saveMoviesToStorage(movies);
+            renderMovies();
+        }
+        
+        function renderMovies() {
+            moviesList.innerHTML = '';
+            
+            let filteredMovies = [...movies];
+            
+            // Filtrar por búsqueda
+            if (currentSearch) {
+                filteredMovies = filteredMovies.filter(movie => 
+                    movie.title.toLowerCase().includes(currentSearch)
+                );
+            }
+            
+            // Actualizar contadores
+            totalMoviesCount.textContent = `${movies.length} ${movies.length === 1 ? 'película en total' : 'películas en total'}`;
+            filteredMoviesCount.textContent = `${filteredMovies.length} ${filteredMovies.length === 1 ? 'coincidencia' : 'coincidencias'}`;
+            
+            if (filteredMovies.length === 0) {
+                const noMoviesMsg = currentSearch ? 
+                    'No hay películas que coincidan con tu búsqueda' : 
+                    'No hay películas en la lista';
+                
+                moviesList.innerHTML = `<div class="no-movies">${noMoviesMsg}</div>`;
+            } else {
+                filteredMovies.forEach((movie) => {
+                    const movieElement = document.createElement('div');
+                    movieElement.className = 'movie-item';
+                    
+                              // Icono según la plataforma
+                    let platformIcon = 'fa-film';
+                    if (movie.platform === 'youtube') platformIcon = 'fa-youtube';
+                    if (movie.platform === 'dailymotion') platformIcon = 'fa-play-circle';
+                    if (movie.platform === 'ok') platformIcon = 'fa-vk';
+                    
+                    movieElement.innerHTML = `
+                        <div class="title">
+                            <i class="fab ${platformIcon}" style="margin-right: 8px;"></i>
+                            ${movie.title}
+                        </div>
+                        <div class="actions">
+                            <i class="fas fa-trash" data-url="${movie.url}" data-action="delete"></i>
+                        </div>
+                    `;
+                    
+                    movieElement.addEventListener('click', () => {
+                        document.querySelectorAll('.movie-item').forEach(item => {
+                            item.classList.remove('selected');
+                        });
+                        
+                        movieElement.classList.add('selected');
+                        playMovie(movie);
+                    });
+                    
+                    moviesList.appendChild(movieElement);
+                });
+            }
+            
+            // Agregar event listeners para los botones de acción
+            document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    deleteMovie(this.dataset.url);
+                });
+            });
+        }
+        
+        function playMovie(movie) {
+            videoPlayer.src = movie.embedUrl;
+            showNotification(`Reproduciendo: ${movie.title}`);
+        }
+        
+        function deleteMovie(movieUrl) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta película?')) {
+                movies = movies.filter(movie => movie.url !== movieUrl);
+                saveMoviesToStorage(movies);
+                showNotification('Película eliminada');
+                renderMovies();
+            }
+        }
+        
+        function detectPlatform(url) {
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                return 'youtube';
+            } else if (url.includes('dailymotion.com') || url.includes('dai.ly')) {
+                return 'dailymotion';
+            } else if (url.includes('ok.ru') || url.includes('odnoklassniki.ru')) {
+                return 'ok';
+            }
+            return 'unknown';
+        }
+        
+        function isValidVideoUrl(url) {
+            // YouTube
+            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+            // Dailymotion
+            const dailymotionRegex = /^(https?:\/\/)?(www\.)?(dailymotion\.com|dai\.ly)\/.+$/;
+            // OK.ru
+            const okruRegex = /^(https?:\/\/)?(www\.)?(ok\.ru|odnoklassniki\.ru)\/.+$/;
+            
+            return youtubeRegex.test(url) || dailymotionRegex.test(url) || okruRegex.test(url);
+        }
+        
+        function convertToEmbedUrl(url) {
+            const platform = detectPlatform(url);
+            
+            // Si ya es una URL embebida, devolverla tal cual
+            if (url.includes('embed')) return url;
+            
+            switch (platform) {
+                case 'youtube':
+                    // Extraer ID de YouTube
+                    let videoId = '';
+                    const youtubeRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                    const match = url.match(youtubeRegExp);
+                    
+                    if (match && match[2].length === 11) {
+                        videoId = match[2];
+                    } else if (url.includes('youtu.be/')) {
+                        videoId = url.split('youtu.be/')[1].split(/[?&]/)[0];
+                    }
+                    
+                    if (videoId) {
+                        return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+                    }
+                    break;
+                    
+                case 'dailymotion':
+                    // Extraer ID de Dailymotion
+                    const dmRegExp = /^.+dailymotion.com\/(video|hub)\/([^_]+)[^#]*(#video=([^_&]+))?/;
+                    const dmMatch = url.match(dmRegExp);
+                    
+                    if (dmMatch) {
+                        const videoId = dmMatch[4] || dmMatch[2];
+                        return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1`;
+                    } else if (url.includes('dai.ly/')) {
+                        const videoId = url.split('dai.ly/')[1].split(/[?&]/)[0];
+                        return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1`;
+                    }
+                    break;
+                    
+                case 'ok':
+                    // Extraer ID de OK.ru
+                    if (url.includes('video/')) {
+                        const parts = url.split('video/');
+                        if (parts.length > 1) {
+                            const videoId = parts[1].split('/')[0].split('?')[0];
+                            return `https://ok.ru/videoembed/${videoId}?autoplay=1`;
+                        }
+                    }
+                    break;
+            }
+            
+            return url;
+        }
+        
+        function saveMoviesToFile() {
+            if (movies.length === 0) {
+                showNotification('No hay películas para guardar', 'warning');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(movies, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'peliculas.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showNotification('Películas guardadas en archivo');
+        }
+        
+        function loadMoviesFromFile() {
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showNotification('Por favor selecciona un archivo', 'warning');
+                return;
+            }
+            
+            if (file.type !== "application/json" && !file.name.endsWith('.json')) {
+                showNotification('Por favor selecciona un archivo JSON', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const loadedMovies = JSON.parse(e.target.result);
+                    
+                    if (!Array.isArray(loadedMovies)) {
+                        throw new Error('El archivo no contiene un array válido');
+                    }
+                    
+                    // Validar estructura básica de las películas
+                    const isValid = loadedMovies.every(movie => 
+                        movie.title && movie.url && movie.embedUrl
+                    );
+                    
+                    if (!isValid) {
+                        throw new Error('El archivo no tiene el formato correcto');
+                    }
+                    
+                    // Asegurarse de que todas las películas tengan addedAt y platform
+                    const processedMovies = loadedMovies.map(movie => {
+                        if (!movie.addedAt) {
+                            movie.addedAt = new Date().toISOString();
+                        }
+                        if (!movie.platform) {
+                            movie.platform = detectPlatform(movie.url);
+                        }
+                        // Actualizar embedUrl por si ha cambiado la lógica
+                        movie.embedUrl = convertToEmbedUrl(movie.url);
+                        return movie;
+                    });
+                    
+                    movies = processedMovies;
+                    saveMoviesToStorage(movies);
+                    showNotification(`Se cargaron ${movies.length} películas correctamente`);
+                    loadFileModal.style.display = 'none';
+                    fileInput.value = '';
+                    renderMovies();
+                } catch (error) {
+                    showNotification('Error al cargar el archivo: ' + error.message, 'error');
+                }
+            };
+            
+            reader.onerror = function() {
+                showNotification('Error al leer el archivo', 'error');
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        function updateMoviesFromUrl() {
+            const url = 'https://yagopc.github.io/Cine/peliculas.json';
+            
+            showNotification('Actualizando películas...', 'info', true);
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('No se pudo cargar el archivo');
+                    }
+                    return response.json();
+                })
+                .then(loadedMovies => {
+                    if (!Array.isArray(loadedMovies)) {
+                        throw new Error('El archivo no contiene un array válido');
+                    }
+                    
+                    // Validar estructura básica de las películas
+                    const isValid = loadedMovies.every(movie => 
+                        movie.title && movie.url && movie.embedUrl
+                    );
+                    
+                    if (!isValid) {
+                        throw new Error('El archivo no tiene el formato correcto');
+                    }
+                    
+                    // Asegurarse de que todas las películas tengan addedAt y platform
+                    const processedMovies = loadedMovies.map(movie => {
+                        if (!movie.addedAt) {
+                            movie.addedAt = new Date().toISOString();
+                        }
+                        if (!movie.platform) {
+                            movie.platform = detectPlatform(movie.url);
+                        }
+                        // Actualizar embedUrl por si ha cambiado la lógica
+                        movie.embedUrl = convertToEmbedUrl(movie.url);
+                        return movie;
+                    });
+                    
+                    movies = processedMovies;
+                    saveMoviesToStorage(movies);
+                    showNotification(`Se actualizaron ${movies.length} películas correctamente`);
+                    renderMovies();
+                })
+                .catch(error => {
+                    showNotification('Error al cargar las películas: ' + error.message, 'error');
+                });
+        }
+        
+        function showNotification(message, type = 'success', loading = false) {
+            notificationText.textContent = message;
+            
+            // Cambiar color según el tipo
+            if (type === 'error') {
+                notification.style.backgroundColor = '#f44336';
+            } else if (type === 'warning') {
+                notification.style.backgroundColor = '#ff9800';
+            } else if (type === 'info') {
+                notification.style.backgroundColor = '#2196F3';
+            } else {
+                notification.style.backgroundColor = '#4CAF50';
+            }
+            
+            // Cambiar icono
+            const icon = notification.querySelector('i');
+            if (loading) {
+                icon.className = 'loading';
+            } else {
+                if (type === 'error') {
+                    icon.className = 'fas fa-exclamation-circle';
+                } else if (type === 'warning') {
+                    icon.className = 'fas fa-exclamation-triangle';
+                } else if (type === 'info') {
+                    icon.className = 'fas fa-info-circle';
+                } else {
+                    icon.className = 'fas fa-check-circle';
+                }
+            }
+            
+            notification.classList.add('show');
+            
+            // Ocultar después de 3 segundos (a menos que sea de carga)
+            if (!loading) {
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+        }
+        
+        function updateMoviesCount() {
+            totalMoviesCount.textContent = `${movies.length} ${movies.length === 1 ? 'película en total' : 'películas en total'}`;
+        }
+    </script>
+</body>
+</html>
