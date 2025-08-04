@@ -1127,5 +1127,61 @@
     "addedAt": "2025-07-22T15:03:50.700Z",
     "platform": "ok",
     "genre": "Aventura"
+  },
+  {
+    "title": "Punto de fuga",
+    "url": "http://ok.ru/video/4921878841983",
+    "embedUrl": "https://ok.ru/videoembed/4921878841983?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "Thriller"
+  },
+  {
+    "title": "Crónica anglosajona",
+    "url": "http://ok.ru/video/4921877793407",
+    "embedUrl": "https://ok.ru/videoembed/4921877793407?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "Histórica"
+  },
+  {
+    "title": "Siete reyes deben morir",
+    "url": "http://ok.ru/video/4921874844287",
+    "embedUrl": "https://ok.ru/videoembed/4921874844287?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "Histórica"
+  },
+  {
+    "title": "Carnada",
+    "url": "http://ok.ru/video/4506812811903",
+    "embedUrl": "https://ok.ru/videoembed/4506812811903?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "Terror"
+  },
+  {
+    "title": "Extinción",
+    "url": "http://ok.ru/video/4504214637183",
+    "embedUrl": "https://ok.ru/videoembed/4504214637183?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "Ciencia ficción"
+  },
+  {
+    "title": "La princesa guerrera",
+    "url": "http://ok.ru/video/4502814395007",
+    "embedUrl": "https://ok.ru/videoembed/4502814395007?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "Aventura"
+  },
+  {
+    "title": "Ocupación",
+    "url": "http://ok.ru/video/4501002717823",
+    "embedUrl": "https://ok.ru/videoembed/4501002717823?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "Ciencia ficción"
   }
 ]
