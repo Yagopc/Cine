@@ -1241,6 +1241,15 @@
     "genre": "Drama"
   },
   {
+    "title": "Survival: El héroe de las Ardenas",
+    "url": "http://ok.ru/video/7692354980399",
+    "embedUrl": "https://ok.ru/videoembed/7692354980399?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "Bélica"
+  },
+  
+  {
     "title": "El rey proscrito",
     "url": "http://ok.ru/video/7414965733935",
     "embedUrl": "https://ok.ru/videoembed/7414965733935?autoplay=1",
@@ -1249,12 +1258,12 @@
     "genre": "Drama"
   },
   {
-    "title": "Survival: El héroe de las Ardenas",
-    "url": "http://ok.ru/video/7692354980399",
-    "embedUrl": "https://ok.ru/videoembed/7692354980399?autoplay=1",
+    "title": " bajo el signo de Roma",
+    "url": "https://m.ok.ru/video/8066785020598",
+    "embedUrl": "https://ok.ru/videoembed/8066785020598?autoplay=1",
     "addedAt": "2025-08-05T00:00:00.000Z",
     "platform": "ok",
-    "genre": "Bélica"
+    "genre": "romanos"
   },
   {
     "title": "Tres",
@@ -1287,5 +1296,174 @@
     "addedAt": "2025-08-05T00:00:00.000Z",
     "platform": "ok",
     "genre": "Fantástica"
+  },
+  
+  {
+    "title": "los gigantes de Roma",
+    "url": "https://m.ok.ru/video/2425254906617",
+    "embedUrl": "https://ok.ru/videoembed/2425254906617?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "romanos"
+  },
+  {
+    "title": "el asesinato de Julio César",
+    "url": "https://m.ok.ru/video/5352712374873",
+    "embedUrl": "https://ok.ru/videoembed/5352712374873?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "romanos"
+  },
+  {
+    "title": "Hércules contra Roma",
+    "url": "https://m.ok.ru/video/7555105098422",
+    "embedUrl": "https://ok.ru/videoembed/7555105098422?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "romanos"
+  },
+  {
+    "title": "los bárbaros contra el Imperio romano",
+    "url": "https://m.ok.ru/video/1164477467197",
+    "embedUrl": "https://ok.ru/videoembed/1164477467197?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "romanos"
+  },
+  {
+    "title": "poncio pilatos",
+    "url": "https://m.ok.ru/video/5280818334381",
+    "embedUrl": "https://ok.ru/videoembed/5280818334381?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "romanos"
+  },
+  {
+    "title": "Aníbal",
+    "url": "https://www.youtube.com/watch?v=ED4gWQqHal0",
+    "embedUrl": "https://www.youtube.com/embed/ED4gWQqHal0?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "youtube",
+    "genre": "romanos"
+  },
+  {
+    "title": "la emperatriz Mesalina",
+    "url": "https://www.youtube.com/watch?v=X_xzJUuwjA0",
+    "embedUrl": "https://www.youtube.com/embed/X_xzJUuwjA0?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "youtube",
+    "genre": "romanos"
+  },
+  {
+    "title": "la corona de hierro",
+    "url": "https://m.ok.ru/video/1389415238250",
+    "embedUrl": "https://ok.ru/videoembed/1389415238250?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "romanos"
+  },
+  {
+    "title": "en busca de la tumba de Jesús",
+    "url": "https://m.ok.ru/video/7609794759215",
+    "embedUrl": "https://ok.ru/videoembed/7609794759215?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "histórica"
+  },
+  {
+    "title": "héroe sin patria",
+    "url": "https://m.ok.ru/video/1123890104893",
+    "embedUrl": "https://ok.ru/videoembed/1123890104893?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "hermanos"
+  },
+  {
+    "title": "el rey Arturo",
+    "url": "https://m.ok.ru/video/3852807309970",
+    "embedUrl": "https://ok.ru/videoembed/3852807309970?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "aventuras"
+  },
+  {
+    "title": "la invasión de los bárbaros",
+    "url": "https://www.youtube.com/watch?v=cvw9vRMzH9A",
+    "embedUrl": "https://www.youtube.com/embed/cvw9vRMzH9A?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "youtube",
+    "genre": "romanos"
+  },
+  {
+    "title": "la caída del Imperio romano",
+    "url": "https://m.ok.ru/video/2567804422838",
+    "embedUrl": "https://ok.ru/videoembed/2567804422838?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "romanos"
+  },
+  {
+    "title": "la última legión",
+    "url": "https://m.ok.ru/video/9181741648627",
+    "embedUrl": "https://ok.ru/videoembed/9181741648627?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "romanos"
+  },
+  {
+    "title": "Espartaco",
+    "url": "https://m.ok.ru/video/7100570208936",
+    "embedUrl": "https://ok.ru/videoembed/7100570208936?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "romanos"
+  },
+  {
+    "title": "quo vadis",
+    "url": "https://m.ok.ru/video/1143041755864",
+    "embedUrl": "https://ok.ru/videoembed/1143041755864?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "romanos"
+  },
+  {
+    "title": "Centurión",
+    "url": "https://m.ok.ru/video/7334023465519",
+    "embedUrl": "https://ok.ru/videoembed/7334023465519?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "romanos"
+  },
+  {
+    "title": "la vida de Brian",
+    "url": "https://m.ok.ru/video/3895865445010",
+    "embedUrl": "https://ok.ru/videoembed/3895865445010?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "humor"
+  },
+  {
+    "title": "el coloso de Rodas",
+    "url": "https://m.ok.ru/video/5440338922157",
+    "embedUrl": "https://ok.ru/videoembed/5440338922157?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "aventuras"
+  },
+  {
+    "title": "la Atlántida el continente perdido",
+    "url": "https://m.ok.ru/video/7493957257775",
+    "embedUrl": "https://ok.ru/videoembed/7493957257775?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "aventuras"
+  },
+  {
+    "title": "los conquistadores de Atlantis",
+    "url": "https://m.ok.ru/video/2185749465708",
+    "embedUrl": "https://ok.ru/videoembed/2185749465708?autoplay=1",
+    "addedAt": "2025-08-05T00:00:00.000Z",
+    "platform": "ok",
+    "genre": "aventuras"
   }
-]
+  ]
