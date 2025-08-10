@@ -1458,6 +1458,48 @@
     "platform": "ok",
     "genre": "Aventuras"
   },
+
+  {
+    "title": "El legado",
+    "url": "https://m.ok.ru/video/7583301569071",
+    "embedUrl": "https://ok.ru/videoembed/7583301569071?autoplay=1",
+    "addedAt": "2025-07-22T15:03:50.699Z",
+    "platform": "ok",
+    "genre": "Aventura"
+  },
+  {
+    "title": "el descubrimiento",
+    "url": "https://m.ok.ru/video/7847291980531",
+    "genre": "ciencia ficción",
+    "platform": "ok",
+    "embedUrl": "https://ok.ru/videoembed/7847291980531?autoplay=1",
+    "addedAt": "2025-08-10T12:20:29.636Z"
+  },
+  {
+    "title": "viaje al mundo perdido",
+    "url": "https://m.ok.ru/video/3855487404690",
+    "genre": "Aventuras",
+    "platform": "ok",
+    "embedUrl": "https://ok.ru/videoembed/3855487404690?autoplay=1",
+    "addedAt": "2025-08-10T12:20:29.638Z"
+  },
+  {
+    "title": "la bestia del volcán",
+    "url": "https://www.youtube.com/watch?v=9RVzYuAX2c0",
+    "genre": "Aventuras",
+    "platform": "youtube",
+    "embedUrl": "https://www.youtube.com/embed/9RVzYuAX2c0?autoplay=1",
+    "addedAt": "2025-08-10T12:20:29.639Z"
+  },
+  {
+    "title": "estamos solos",
+    "url": "https://m.ok.ru/video/7461498653231",
+    "genre": "ciencia ficción",
+    "platform": "ok",
+    "embedUrl": "https://ok.ru/videoembed/7461498653231?autoplay=1",
+    "addedAt": "2025-08-10T12:20:29.640Z"
+  },
+ 
   {
     "title": "los conquistadores de Atlantis",
     "url": "https://ok.ru/video/4191679089337",
