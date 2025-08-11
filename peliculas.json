@@ -1570,6 +1570,14 @@
     "embedUrl": "https://ok.ru/videoembed/1235989695192?autoplay=1",
     "addedAt": "2025-08-11T12:53:31.276Z",
     "genre": "Ciencia ficción"
-  }
+  },
+   {
+    "title": "La cosa",
+    "url": "http://ok.ru/video/7248666102319",
+    "embedUrl": "https://ok.ru/videoembed/7248666102319?autoplay=1",
+    "addedAt": "2025-08-11T15:08:12.299Z",
+    "platform": "ok",
+    "genre": "Ciencia ficción"
+   }
   ]
 
