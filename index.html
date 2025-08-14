@@ -391,6 +391,7 @@
             <button id="loadMoviesBtn" class="secondary"><i class="fas fa-folder-open"></i> Cargar</button>
             <button id="updateMoviesBtn" class="update"><i class="fas fa-sync-alt"></i> Actualizar</button>
             <button id="openOriginalBtn" class="secondary"><i class="fas fa-external-link-alt"></i> Abrir original</button>
+            <button id="tokyVideoBtn" class="secondary"><i class="fas fa-video"></i> TokyVideo</button>
             <button id="copyUrlBtn" class="secondary"><i class="fas fa-copy"></i> Copiar URL</button>
         </div>
         
@@ -451,6 +452,7 @@
     const GENRES = [
         "Romanos","Aventura","Drama","Ciencia ficción","Policíaca","Western","Suspense","Fantasía","Comedia","Terror","Drama"
     ];
+        const tokyVideoBtn = document.getElementById('tokyVideoBtn');
     const addMovieBtn = document.getElementById('addMovieBtn');
     const saveMoviesBtn = document.getElementById('saveMoviesBtn');
     const copyUrlBtn = document.getElementById('copyUrlBtn');
@@ -544,7 +546,11 @@
         movieFormSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar';
         addMovieModal.style.display = 'block';
     });
-
+tokyVideoBtn.addEventListener('click', () => {
+        window.open('https://www.google.com/search?q=tokyvideo+completa+%2Bcastellano+&client=ms-android-xiaomi-terr2-rso2&sca_esv=e77f9c08ad4d25ad&udm=7&biw=392&bih=753&sxsrf=AE3TifMauL5VhMsYZX7wn-o_k27SVfRkjg%3A1755201189343&ei=pT6eaMLbFOCJ-d8Pk_7DmAk&oq=tokyvideo+completa+%2Bcastellano+&gs_lp=Ehltb2JpbGUtZ3dzLW1vZGVsZXNzLXZpZGVvIh90b2t5dmlkZW8gY29tcGxldGEgK2Nhc3RlbGxhbm8gSP0jUN4PWOggcAF4AJABAJgBf6ABkAiqAQMxLji4AQPIAQD4AQGYAgCgAgCYAwCIBgGSBwCgB5UDsgcAuAcAwgcAyAcA&sclient=mobile-gws-modeless-video#ip=1', '_blank');
+        showNotification('Buscando en TokyVideo...');
+    });
+        
     copyUrlBtn.addEventListener('click', copyVideoUrl);
     saveMoviesBtn.addEventListener('click', saveMoviesToFile);
     loadMoviesBtn.addEventListener('click', () => loadFileModal.style.display = 'block');
