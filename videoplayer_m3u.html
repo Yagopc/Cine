@@ -1,1 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reproductor M3U para Smart TV</title>
+    <meta name="viewport" content="width=1024, initial-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0; padding: 0;
+            background: #181818; color: #fff;
+            font-size: 1.2em;
+        }
+        header {
+            background: #24292f;
+            padding: 1em;
+            text-align: center;
+            font-size: 1.5em;
+            color: #fff;
+        }
+        #videoSection {
+            width: 100vw;
+            max-width: 100vw;
+            background: #222;
+            padding: 0.5em 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 45vh;
+            min-width: 400px;
+        }
+        #videoTitle {
+            font-size: 1.1em;
+            margin-bottom: 0.5em;
+            color: #fff;
+            text-align: center;
+        }
+        #videoPlayer {
+            width: 90vw;
+            max-width: 1200px;
+            background: #000;
+            border-radius: 8px;
+            min-height: 300px;
+            outline: 4px solid #444;
+        }
+        #skipAdBtn, #closeBtn {
+            background: #fbc02d;
+            color: #222;
+            border: none;
+            border-radius: 8px;
+            padding: 0.9em 1.8em;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 1em 1em 0 0;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+        }
+        #skipAdBtn:active, #closeBtn:active {
+            background: #c49000;
+        }
+        #controls {
+            margin: 1em auto 0 auto;
+            width: 98vw;
+            max-width: 1200px;
+            display: flex;
+            gap: 1em;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        #fileInput {
+            display: none;
+        }
+        #fileLabel, #clearBtn, #analyzeBtn, #saveOnlineBtn, #removeOfflineBtn, #updateBtn {
+            display: block;
+            background: #0366d6;
+            color: #fff;
+            padding: 1em 2em;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            cursor: pointer;
+            text-align: center;
+            margin-bottom: 0.2em;
+            transition: background 0.3s;
+        }
+        #fileLabel:active, #analyzeBtn:active, #saveOnlineBtn:active, #removeOfflineBtn:active, #updateBtn:active {
+            background: #0356b6;
+        }
+        #clearBtn {
+            background: #e53935;
+        }
+        #clearBtn:active {
+            background: #b71c1c;
+        }
+        #saveOnlineBtn {
+            background: #1abc9c;
+        }
+        #removeOfflineBtn {
+            background: #f39c12;
+        }
+        #removeOfflineBtn:active {
+            background: #bc860c;
+        }
+        #updateBtn {
+            background: #9b59b6;
+        }
+        #updateBtn:active {
+            background: #7c379a;
+        }
+        #playlist {
+            margin: 1em auto 0 auto;
+            width: 98vw;
+            max-width: 1200px;
+            background: #222;
+            border-radius: 12px;
+            padding: 0.5em 0;
+            box-shadow: 0 0 6px #0005;
+        }
+        .video-item {
+            padding: 1.4em 0.7em;
+            border-bottom: 1px solid #333;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .video-item:last-child {
+            border-bottom: none;
+        }
+        .video-main {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            cursor: pointer;
+            gap: 0.9em;
+            font-size: 1.1em;
+        }
+        .video-item.selected, .video-item:active {
+            background: #3866b2;
+        }
+        .status {
+            font-size: 1em;
+            font-weight: bold;
+        }
+        .online {
+            color: #34c759;
+        }
+        .offline {
+            color: #ff3b30;
+        }
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #e53935;
+            font-size: 1.5em;
+            cursor: pointer;
+            margin-left: 1em;
+            padding: 0 0.3em;
+            transition: color 0.2s;
+        }
+        .delete-btn:active {
+            color: #b71c1c;
+        }
+        @media (max-width: 800px) {
+            #videoSection {
+                min-width: 100vw;
+            }
+            #controls, #playlist {
+                width: 99vw;
+            }
+            #videoPlayer {
+                width: 99vw;
+            }
+            .video-item {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Reproductor de Vídeos M3U para Smart TV
+    </header>
 
+    <section id="videoSection">
+        <div id="videoTitle"></div>
+        <iframe id="videoPlayer" frameborder="0" allowfullscreen></iframe>
+        <button id="skipAdBtn">SALTAR ANUNCIO</button>
+        <button id="closeBtn">CERRAR VIDEO</button>
+    </section>
+
+    <div id="controls">
+        <label id="fileLabel" for="fileInput">Seleccionar archivo M3U</label>
+        <button id="updateBtn" type="button">Actualizar lista</button>
+        <button id="analyzeBtn" type="button">Analizar lista</button>
+        <button id="saveOnlineBtn" type="button">Guardar online (.m3u)</button>
+        <button id="removeOfflineBtn" type="button">Eliminar offline</button>
+        <button id="clearBtn" type="button">Limpiar</button>
+    </div>
+    <input type="file" id="fileInput" accept=".m3u,.txt"/>
+    <div id="playlist"></div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileLabel = document.getElementById('fileLabel');
+        const playlistDiv = document.getElementById('playlist');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoTitleDiv = document.getElementById('videoTitle');
+        const clearBtn = document.getElementById('clearBtn');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const saveOnlineBtn = document.getElementById('saveOnlineBtn');
+        const removeOfflineBtn = document.getElementById('removeOfflineBtn');
+        const updateBtn = document.getElementById('updateBtn');
+        const skipAdBtn = document.getElementById('skipAdBtn');
+        const closeBtn = document.getElementById('closeBtn');
+
+        const STORAGE_KEY = 'm3u_video_list_tv';
+        let videos = [];
+        let currentVideoIdx = null;
+        let adSkipTimeout = null;
+        let adSkippable = false;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try { videos = JSON.parse(saved); } catch { videos = []; }
+            }
+            // Si no hay videos guardados, cargar los del archivo JSON por defecto
+            if (videos.length === 0) {
+                loadDefaultVideos();
+            } else {
+                showPlaylist(videos);
+            }
+        });
+        
+        function loadDefaultVideos() {
+            const defaultVideos = [
+                {
+                    "title": "los dos gladiadores",
+                    "url": "https://www.youtube.com/embed/VPoJohseibU?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                },
+                {
+                    "title": "la caída del Imperio romano",
+                    "url": "https://www.youtube.com/embed/FFPhnseibU?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                },
+                {
+                    "title": "la emperatriz Mesalina",
+                    "url": "https://www.youtube.com/embed/X_xzJUuwjA0?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                },
+                {
+                    "title": "Maciste",
+                    "url": "https://www.youtube.com/embed/s0VDtT0nvHo?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                },
+                {
+                    "title": "gladiador de Roma",
+                    "url": "https://www.youtube.com/embed/Z0_x0MnZgFs?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                },
+                {
+                    "title": "Aníbal",
+                    "url": "https://www.youtube.com/embed/ED4gWQqHal0?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                },
+                {
+                    "title": "Julio César",
+                    "url": "https://www.youtube.com/embed/f0n-1wuKN8Y?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                },
+                {
+                    "title": "escipión",
+                    "url": "https://www.youtube.com/embed/Up8y0bwNsBE?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                },
+                {
+                    "title": "los tres invencibles",
+                    "url": "https://www.youtube.com/embed/xUBdg1-Ypu4?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                },
+                {
+                    "title": "Ben hur",
+                    "url": "https://www.youtube.com/embed/0P8vTfbgglk?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                },
+                {
+                    "title": "la rebelión de los gladiadores",
+                    "url": "https://www.youtube.com/embed/4nLpU6wt3qU?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                },
+                {
+                    "title": "bajo el signo del Roma",
+                    "url": "https://www.youtube.com/embed/JWOu4BHpVhg?autoplay=1&rel=0",
+                    "addedAt": "2025-08-19T13:20:31Z",
+                    "platform": "youtube",
+                    "genre": "Romanos"
+                }
+            ];
+            
+            videos = defaultVideos;
+            saveList();
+            showPlaylist(videos);
+        }
+        
+        function saveList() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(videos));
+        }
+        
+        function dedupeAndMergeVideos(oldList, newList) {
+            const urlSet = new Set(oldList.map(v => v.url));
+            const deduped = [...oldList];
+            for (const v of newList) {
+                if (!urlSet.has(v.url)) {
+                    deduped.push(v);
+                    urlSet.add(v.url);
+                }
+            }
+            return deduped;
+        }
+        
+        function parseM3U(content) {
+            const lines = content.split(/\r?\n/);
+            const entries = [];
+            let currentTitle = '';
+            for (let line of lines) {
+                line = line.trim();
+                if (line.startsWith('#EXTINF:')) {
+                    const parts = line.split(',');
+                    currentTitle = parts.length > 1 ? parts[1].trim() : '';
+                } else if (line && !line.startsWith('#')) {
+                    if (currentTitle) {
+                        entries.push({ title: currentTitle, url: line, status: null });
+                        currentTitle = '';
+                    }
+                }
+            }
+            return entries;
+        }
+        
+        updateBtn.addEventListener('click', async function() {
+            updateBtn.disabled = true;
+            updateBtn.textContent = "Actualizando...";
+            try {
+                const response = await fetch("https://yagopc.github.io/Cine/YouTuberomanos.json");
+                if (!response.ok) throw new Error("No se pudo descargar el archivo remoto");
+                const data = await response.json();
+                if (!Array.isArray(data)) throw new Error("El archivo remoto no contiene un array");
+                
+                // Convertir URLs normales de YouTube a URLs de embed
+                const newList = data.map(item => {
+                    let embedUrl = item.embedUrl || "";
+                    
+                    // Si no hay embedUrl pero hay una URL normal de YouTube, convertirla
+                    if (!embedUrl && item.url && item.url.includes('youtube.com')) {
+                        const videoId = extractYouTubeId(item.url);
+                        if (videoId) {
+                            embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+                        }
+                    }
+                    
+                    return {
+                        title: item.title || item.nombre || item.name || "",
+                        url: embedUrl || item.url || "",
+                        status: null
+                    };
+                }).filter(v => v.title && v.url);
+                
+                if (newList.length === 0) throw new Error("No se encontraron vídeos válidos en el archivo remoto");
+                
+                videos = newList;
+                saveList();
+                showPlaylist(videos);
+                alert("Lista actualizada correctamente desde el archivo remoto.");
+            } catch (e) {
+                alert("Error actualizando la lista: " + e.message);
+            }
+            updateBtn.disabled = false;
+            updateBtn.textContent = "Actualizar lista";
+        });
+        
+        function extractYouTubeId(url) {
+            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[7].length === 11) ? match[7] : false;
+        }
+
+        function showPlaylist(videos) {
+            playlistDiv.innerHTML = '';
+            if (videos.length === 0) {
+                playlistDiv.innerHTML = '<div style="padding:1em;text-align:center;color:#aaa;">No se encontraron vídeos en el archivo.</div>';
+                return;
+            }
+            videos.forEach((video, idx) => {
+                const div = document.createElement('div');
+                div.className = 'video-item';
+                if (currentVideoIdx === idx) div.classList.add('selected');
+                
+                // Botón de eliminar
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.title = 'Eliminar de la lista';
+                deleteBtn.innerHTML = '🗑️';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteVideo(idx);
+                };
+                
+                // Bloque principal clicable (título + estado)
+                const mainDiv = document.createElement('div');
+                mainDiv.className = 'video-main';
+                mainDiv.tabIndex = 0;
+                mainDiv.onclick = () => playVideo(idx);
+                mainDiv.onkeydown = (e) => {
+                    if (e.key === "Enter" || e.key === " ") playVideo(idx);
+                };
+                
+                // Título
+                const spanTitle = document.createElement('span');
+                spanTitle.textContent = video.title;
+                
+                // Estado online/offline
+                let statusSpan = '';
+                if (video.status === 'online') {
+                    statusSpan = document.createElement('span');
+                    statusSpan.className = 'status online';
+                    statusSpan.textContent = 'Online';
+                } else if (video.status === 'offline') {
+                    statusSpan = document.createElement('span');
+                    statusSpan.className = 'status offline';
+                    statusSpan.textContent = 'Offline';
+                }
+                
+                mainDiv.appendChild(spanTitle);
+                if (statusSpan) mainDiv.appendChild(statusSpan);
+                div.appendChild(mainDiv);
+                div.appendChild(deleteBtn);
+                playlistDiv.appendChild(div);
+            });
+        }
+        
+        function deleteVideo(idx) {
+            videos.splice(idx, 1);
+            saveList();
+            showPlaylist(videos);
+        }
+        
+        function detectAndEnableSkipAd(videoObj) {
+            const adPatterns = [/anunci/i, /public/i, /\bad\b/i, /adserver/i, /promo/i];
+            let isAd = false;
+            for (const pat of adPatterns) {
+                if (pat.test(videoObj.title) || pat.test(videoObj.url)) {
+                    isAd = true;
+                    break;
+                }
+            }
+            if (isAd) {
+                adSkippable = true;
+                showSkipAdBtn();
+                adSkipTimeout = setTimeout(skipAd, 7000); // 7s máx anuncio
+            } else {
+                hideSkipAdBtn();
+            }
+        }
+        
+        function showSkipAdBtn() {
+            skipAdBtn.style.display = 'inline-block';
+        }
+        
+        function hideSkipAdBtn() {
+            skipAdBtn.style.display = 'none';
+            adSkippable = false;
+            if (adSkipTimeout) {
+                clearTimeout(adSkipTimeout);
+                adSkipTimeout = null;
+            }
+        }
+        
+        function skipAd() {
+            if (adSkippable && currentVideoIdx !== null) {
+                let nextIdx = currentVideoIdx + 1;
+                if (nextIdx >= videos.length) nextIdx = 0;
+                playVideo(nextIdx);
+            }
+        }
+        
+        skipAdBtn.addEventListener('click', skipAd);
+
+        function playVideo(idx) {
+            const video = videos[idx];
+            currentVideoIdx = idx;
+            hideSkipAdBtn();
+            videoTitleDiv.textContent = video.title;
+            
+            // Usar iframe para YouTube en lugar de elemento video
+            videoPlayer.src = video.url;
+            videoPlayer.style.display = 'block';
+            closeBtn.style.display = 'inline-block';
+            detectAndEnableSkipAd(video);
+            highlightSelected();
+        }
+        
+        function highlightSelected() {
+            const items = document.querySelectorAll('.video-item');
+            items.forEach((div, i) => {
+                if (i === currentVideoIdx) div.classList.add('selected');
+                else div.classList.remove('selected');
+            });
+        }
+        
+        function closeVideoEmbed() {
+            // Detener el video estableciendo src a vacío
+            videoPlayer.src = '';
+            videoPlayer.style.display = 'block';
+            videoTitleDiv.textContent = '';
+            closeBtn.style.display = 'none';
+            hideSkipAdBtn();
+            currentVideoIdx = null;
+            highlightSelected();
+        }
+        
+        closeBtn.addEventListener('click', closeVideoEmbed);
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const newList = parseM3U(evt.target.result);
+                videos = dedupeAndMergeVideos(videos, newList);
+                saveList();
+                showPlaylist(videos);
+                fileInput.value = "";
+            };
+            reader.readAsText(file, 'utf-8');
+        });
+        
+        clearBtn.addEventListener('click', function() {
+            videos = [];
+            saveList();
+            showPlaylist(videos);
+            closeVideoEmbed();
+        });
+        
+        analyzeBtn.addEventListener('click', function() {
+            if (videos.length === 0) return;
+            let changed = false;
+            let idx = 0;
+            
+            function checkNext() {
+                if (idx >= videos.length) {
+                    if (changed) saveList();
+                    showPlaylist(videos);
+                    return;
+                }
+                
+                const v = videos[idx];
+                // Para YouTube, asumimos que siempre está online
+                // ya que la verificación real requeriría API de YouTube
+                v.status = 'online';
+                changed = true;
+                showPlaylist(videos);
+                idx++;
+                setTimeout(checkNext, 80);
+            }
+            
+            checkNext();
+        });
+        
+        removeOfflineBtn.addEventListener('click', function() {
+            const onlineVideos = videos.filter(v => v.status === 'online' || v.status === null);
+            if (onlineVideos.length === videos.length) {
+                alert('No hay archivos offline para eliminar.');
+                return;
+            }
+            videos = onlineVideos;
+            saveList();
+            showPlaylist(videos);
+        });
+        
+        saveOnlineBtn.addEventListener('click', function() {
+            const items = videos.filter(v => v.status === 'online' || v.status === null);
+            if (!items.length) {
+                alert('No hay archivos online para guardar.');
+                return;
+            }
+            let m3u = '#EXTM3U\n';
+            items.forEach(v => {
+                m3u += `#EXTINF:-1,${v.title}\n${v.url}\n`;
+            });
+            const blob = new Blob([m3u], { type: 'audio/x-mpegurl' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'online.m3u';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                URL.revokeObjectURL(a.href);
+                document.body.removeChild(a);
+            }, 500);
+        });
+        
+        fileLabel.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        // Navegación con teclado para Smart TV
+        document.addEventListener('keydown', function(e) {
+            const items = document.querySelectorAll('.video-item .video-main');
+            if (!items.length) return;
+            
+            let idx = currentVideoIdx !== null ? currentVideoIdx : 0;
+            
+            if (e.key === "ArrowDown") {
+                idx = (idx + 1) % items.length;
+                items[idx].focus();
+                currentVideoIdx = idx;
+                highlightSelected();
+            }
+            
+            if (e.key === "ArrowUp") {
+                idx = (idx - 1 + items.length) % items.length;
+                items[idx].focus();
+                currentVideoIdx = idx;
+                highlightSelected();
+            }
+            
+            if (e.key === "Enter" || e.key === " ") {
+                if (document.activeElement.classList.contains('video-main')) {
+                    let selectedIdx = Array.from(items).indexOf(document.activeElement);
+                    playVideo(selectedIdx);
+                }
+            }
+            
+            if (e.key === "MediaStop" || e.key === "Escape") {
+                closeVideoEmbed();
+            }
+        });
+    </script>
+</body>
+</html>
