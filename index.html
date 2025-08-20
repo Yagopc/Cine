@@ -2,315 +2,156 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>ListaTube Gestor</title>
+  <title>ListaTube Smart TV</title>
   <style>
-    :root{ --accent:#007BFF; --ok:#1fbf54; --ok-bg:#d7fadd; --danger:#d11a2a; }
     body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
     h1 { text-align: center; }
-    .container { max-width: 880px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
-    iframe { width: 100%; height: 420px; border: none; border-radius: 12px; margin-bottom: 18px; background:#000; }
-
-    .form { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    .form input { flex:1; min-width:220px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
-    .form button { padding: 10px 14px; border: none; border-radius: 8px; background: var(--accent); color: white; cursor: pointer; }
-    .form button:hover { filter:brightness(0.95); }
-
-    .hint{font-size:12px;color:#666;margin-top:4px}
-
-    select { width: 100%; padding: 10px; margin: 12px 0; border-radius: 8px; border: 1px solid #ccc; }
-
-    ul { list-style: none; padding: 0; margin-top: 6px; }
-    li { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; border-radius:10px; }
-    li.playing { background: var(--ok-bg); }
-    .title { cursor: pointer; flex: 1; }
-    .controls button { margin-left: 6px; border: none; background: none; cursor: pointer; font-size: 18px; }
-    .controls button:hover { opacity: 0.7; }
-
-    .actions { margin-top: 16px; display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
-    .actions button, .actions input[type=file] { padding: 10px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; background:#fff; }
-    .actions button.primary{background: var(--accent); color:#fff; border:none}
-    .actions button.danger{background:#fff; color:var(--danger); border:1px solid var(--danger)}
-
-    @media (max-width: 720px){
-      .actions{ grid-template-columns: repeat(2,1fr);} 
-    }
+    .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    iframe { width: 100%; height: 400px; border: none; border-radius: 10px; margin-bottom: 20px; }
+    select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; }
+    ul { list-style: none; padding: 0; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #ddd; }
+    .title { cursor: pointer; flex: 1; padding: 5px; }
+    .title.active { background: #c2f0c2; border-radius: 5px; }
+    .controls button { margin-left: 5px; border: none; background: #eee; cursor: pointer; font-size: 16px; border-radius: 4px; padding: 3px 6px; }
+    .controls button:hover { background: #ccc; }
+    .actions { margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px; }
+    .actions button, .actions input[type=file] { flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer; }
   </style>
 </head>
 <body>
 <div class="container">
   <h1>ListaTube</h1>
 
-  <!-- Reproductor de YouTube -->
-  <iframe id="player" src="" allowfullscreen title="Reproductor YouTube"></iframe>
-
-  <!-- Formulario para agregar -->
-  <div class="form">
-    <input type="text" id="title" placeholder="Título del vídeo" />
-    <input type="text" id="url" placeholder="URL de YouTube (watch o youtu.be)" />
-    <button onclick="addVideo()">Agregar</button>
-  </div>
-  <div class="hint">La lista guarda el <strong>título</strong> y la <strong>URL de reproducción</strong> (formato <code>https://www.youtube.com/embed/ID</code>).</div>
+  <!-- Reproductor -->
+  <iframe id="player" src="" allowfullscreen></iframe>
 
   <!-- Selector desplegable -->
-  <select id="videoSelect" onchange="playSelected()">
-    <option value="">-- Selecciona un video --</option>
-  </select>
+  <select id="videoSelect"></select>
 
-  <!-- Listado con controles -->
-  <ul id="videoList" aria-label="Listado de vídeos"></ul>
+  <!-- Listado -->
+  <ul id="videoList"></ul>
 
-  <!-- Botones de control -->
+  <!-- Botones -->
   <div class="actions">
-    <button class="primary" onclick="exportJSON()">Exportar listatube.json</button>
-    <input type="file" id="fileInput" accept="application/json" onchange="importJSON(event)" title="Importar listatube.json">
-    <button class="danger" onclick="clearList()">Limpiar Lista</button>
-    <button onclick="updateFromURL()">Update</button>
+    <button id="exportBtn">Exportar listatube.json</button>
+    <input type="file" id="fileInput" accept="application/json">
+    <button id="clearBtn">Limpiar Lista</button>
+    <button id="updateBtn">Actualizar</button>
   </div>
 </div>
 
 <script>
-  // ====== Config ======
-  const UPDATE_URL = "https://yagopc.github.io/Cine/listatube.json'"; // Cambiar aquí la URL remota
+  var UPDATE_URL = "https://yagopc.github.io/Cine/listatube.json";
+  var videos = [];
+  var currentIndex = -1;
 
-  // ====== Estado ======
-  let videos = loadFromStorage();
-  let currentIndex = -1;
-
-  // ====== Utilidades ======
-  function trimTitle(t){ return (t||"").toString().trim(); }
-
-  function getVideoId(url){
-    try{
-      const u = new URL(url);
-      if(u.hostname.includes("youtu.be")) return u.pathname.slice(1);
-      if(u.hostname.includes("youtube.com")){
-        // /watch?v=ID o /embed/ID
-        if(u.pathname.startsWith("/embed/")) return u.pathname.split("/")[2];
-        return u.searchParams.get("v");
-      }
-      return null;
-    }catch{ return null; }
-  }
-
-  function toEmbedURL(url){
-    const id = getVideoId(url);
-    return id ? `https://www.youtube.com/embed/${id}` : null;
-  }
-
-  function isValidRecord(obj){
-    return obj && typeof obj.title === 'string' && typeof obj.url === 'string';
-  }
-
-  function normalizeRecord(obj){
-    const title = trimTitle(obj.title);
-    const embed = toEmbedURL(obj.url) || (obj.embedUrl ? toEmbedURL(obj.embedUrl) : null);
-    if(!title || !embed) return null;
-    return { title, url: embed }; // url SIEMPRE en formato de reproducción (embed)
-  }
-
-  // ====== Persistencia ======
-  function loadFromStorage(){
-    try{
-      const raw = localStorage.getItem('videos');
-      if(!raw) return [];
-      const arr = JSON.parse(raw);
-      if(!Array.isArray(arr)) return [];
-      return arr.map(r=> normalizeRecord(r)).filter(Boolean);
-    }catch{ return []; }
-  }
-
-  function saveToStorage(){
-    localStorage.setItem('videos', JSON.stringify(videos));
-  }
-
-  // ====== Reproductor ======
-  function playByIndex(index){
-    index = Number(index);
-    if(isNaN(index) || index < 0 || index >= videos.length) return;
-    const { url } = videos[index];
-    const iframe = document.getElementById('player');
-    iframe.src = url; // ya es URL de reproducción (embed)
-    currentIndex = index;
-    // Marcar en UI
-    const select = document.getElementById('videoSelect');
-    select.value = String(index);
-    highlightPlaying();
-  }
-
-  function highlightPlaying(){
-    const list = document.getElementById('videoList');
-    [...list.children].forEach((li, i)=>{
-      if(i === currentIndex) li.classList.add('playing'); else li.classList.remove('playing');
-    });
-    // Opcional: marcar opción con prefijo ▶
-    const sel = document.getElementById('videoSelect');
-    for(let i=0;i<sel.options.length;i++){
-      const base = sel.options[i].getAttribute('data-base') || sel.options[i].textContent.replace(/^▶\s*/,'');
-      sel.options[i].setAttribute('data-base', base);
-      sel.options[i].textContent = (String(i-1) === String(currentIndex)) ? `▶ ${base}` : base; // i-1 porque la primera opción es placeholder
-    }
-  }
-
-  // ====== Acciones ======
-  function addVideo(){
-    const titleEl = document.getElementById('title');
-    const urlEl = document.getElementById('url');
-    const title = trimTitle(titleEl.value);
-    const embed = toEmbedURL(urlEl.value.trim());
-    if(!title || !embed) return alert('Introduce un título y una URL válida de YouTube.');
-    videos.push({ title, url: embed });
-    titleEl.value = ''; urlEl.value = '';
-    saveToStorage();
-    renderAll();
-    playByIndex(videos.length-1);
-  }
-
-  function editVideo(index){
-    const newTitle = prompt('Editar título:', videos[index].title);
-    if(newTitle === null) return; // cancelado
-    const t = trimTitle(newTitle);
-    if(!t) return alert('El título no puede estar vacío.');
-    videos[index].title = t;
-    saveToStorage();
-    renderAll();
-    highlightPlaying();
-  }
-
-  function deleteVideo(index){
-    if(!confirm('¿Eliminar este video?')) return;
-    videos.splice(index,1);
-    if(currentIndex === index) currentIndex = -1;
-    if(currentIndex > index) currentIndex -= 1;
-    saveToStorage();
-    renderAll();
-    if(videos.length){ playByIndex(Math.max(0,currentIndex)); } else { document.getElementById('player').src=''; }
-  }
-
-  function clearList(){
-    if(!confirm('¿Seguro que quieres limpiar toda la lista?')) return;
-    videos = [];
-    currentIndex = -1;
-    saveToStorage();
-    renderAll();
-    document.getElementById('player').src = '';
-  }
-
-  function exportJSON(){
-    // Exporta EXACTAMENTE [{title, url}] donde url es embed
-    const dataStr = JSON.stringify(videos, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'listatube.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }
-
-  function importJSON(ev){
-    const file = ev.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      try{
-        const parsed = JSON.parse(e.target.result);
-        if(!Array.isArray(parsed)) throw new Error('El JSON debe ser una lista de objetos.');
-        const normalized = parsed.map(normalizeRecord).filter(Boolean);
-        if(!normalized.length) throw new Error('No se encontraron registros válidos.');
-        videos = normalized;
-        saveToStorage();
-        renderAll();
-        playByIndex(0);
-      }catch(err){
-        alert('Archivo inválido: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
-    // reset para permitir reimportar el mismo archivo
-    ev.target.value = '';
-  }
-
-  async function updateFromURL(){
-    try{
-      const res = await fetch(UPDATE_URL, { cache: 'no-store' });
-      if(!res.ok) throw new Error('No se pudo cargar el archivo remoto');
-      const data = await res.json();
-      if(!Array.isArray(data)) throw new Error('El JSON remoto debe ser una lista');
-      const normalized = data.map(normalizeRecord).filter(Boolean);
-      if(!normalized.length) throw new Error('El JSON remoto no tiene registros válidos');
-      videos = normalized;
-      saveToStorage();
-      renderAll();
-      playByIndex(0);
-    }catch(e){
-      alert('Error al actualizar: ' + e.message);
-    }
-  }
-
-  function playSelected(){
-    const idx = document.getElementById('videoSelect').value;
-    if(idx === '') return; 
-    playByIndex(idx);
-  }
-
-  // ====== Render ======
-  function renderAll(){
+  function saveVideos() {
+    try { localStorage.setItem("videos", JSON.stringify(videos)); } catch(e) {}
     renderList();
-    renderSelect();
-    highlightPlaying();
   }
 
-  function renderList(){
-    const list = document.getElementById('videoList');
-    list.innerHTML = '';
-    videos.forEach((video, index) => {
-      const li = document.createElement('li');
-      if(index === currentIndex) li.classList.add('playing');
+  function playVideo(index) {
+    if (!videos[index]) return;
+    currentIndex = index;
+    document.getElementById("player").src = videos[index].url;
+    renderList();
+  }
 
-      const span = document.createElement('span');
-      span.textContent = video.title.substring(0,40);
-      span.className = 'title';
-      span.title = video.title; // tooltip
-      span.onclick = () => playByIndex(index);
+  function renderList() {
+    var list = document.getElementById("videoList");
+    var select = document.getElementById("videoSelect");
+    list.innerHTML = "";
+    select.innerHTML = '<option value="">-- Selecciona un video --</option>';
 
-      const controls = document.createElement('span');
-      controls.className = 'controls';
+    videos.forEach(function(video, index) {
+      var li = document.createElement("li");
+      var span = document.createElement("span");
+      span.textContent = video.title;
+      span.className = "title" + (index === currentIndex ? " active" : "");
+      span.onclick = function() { playVideo(index); };
 
-      const editBtn = document.createElement('button');
-      editBtn.textContent = '✏️';
-      editBtn.title = 'Editar título';
-      editBtn.onclick = () => editVideo(index);
+      var controls = document.createElement("span");
+      controls.className = "controls";
 
-      const delBtn = document.createElement('button');
-      delBtn.textContent = '🗑️';
-      delBtn.title = 'Eliminar';
-      delBtn.onclick = () => deleteVideo(index);
+      var delBtn = document.createElement("button");
+      delBtn.textContent = "🗑";
+      delBtn.onclick = function() { if(confirm("Eliminar?")) { videos.splice(index,1); saveVideos(); } };
 
-      controls.appendChild(editBtn);
       controls.appendChild(delBtn);
-
       li.appendChild(span);
       li.appendChild(controls);
       list.appendChild(li);
-    });
-  }
 
-  function renderSelect(){
-    const select = document.getElementById('videoSelect');
-    select.innerHTML = '<option value="">-- Selecciona un video --</option>';
-    videos.forEach((v, i)=>{
-      const opt = document.createElement('option');
-      opt.value = String(i);
-      opt.textContent = v.title.substring(0,40);
-      if(i === currentIndex) opt.selected = true;
+      var opt = document.createElement("option");
+      opt.value = index;
+      opt.textContent = video.title;
+      if (index === currentIndex) opt.selected = true;
       select.appendChild(opt);
     });
   }
 
-  // ====== Init ======
-  renderAll();
-  if(videos.length){ playByIndex(0); }
+  // Eventos
+  document.getElementById("videoSelect").addEventListener("change", function() {
+    var i = this.value;
+    if (i !== "") playVideo(parseInt(i));
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", function() {
+    if (confirm("¿Vaciar lista?")) { videos = []; saveVideos(); }
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", function() {
+    try {
+      var blob = new Blob([JSON.stringify(videos,null,2)], {type:"application/json"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "listatube.json";
+      a.click();
+    } catch(e) {
+      alert("Tu Smart TV no soporta exportación de archivos.");
+    }
+  });
+
+  document.getElementById("fileInput").addEventListener("change", function(evt) {
+    var file = evt.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try { videos = JSON.parse(e.target.result); saveVideos(); }
+      catch(err) { alert("Archivo inválido"); }
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("updateBtn").addEventListener("click", loadFromURL);
+
+  function loadFromURL() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", UPDATE_URL, true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          try {
+            videos = JSON.parse(xhr.responseText);
+            saveVideos();
+          } catch(e) { alert("Error de formato JSON"); }
+        } else {
+          alert("No se pudo cargar la lista");
+        }
+      }
+    };
+    xhr.send();
+  }
+
+  // Inicializar
+  try {
+    var saved = localStorage.getItem("videos");
+    if (saved) videos = JSON.parse(saved);
+    else loadFromURL(); // si no hay nada en localStorage, cargar de internet
+  } catch(e) { loadFromURL(); }
+
+  renderList();
 </script>
 </body>
 </html>
-
