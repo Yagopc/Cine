@@ -51,5 +51,247 @@
   {
     "title": "bajo el signo del Roma",
     "url": "https://www.youtube.com/embed/JWOu4BHpVhg"
+  },
+  
+  {
+    "title": "Aquella casa al lado del cementerio",
+    "url": "https://youtu.be/rMlBLofHFc8?feature=shared",
+    "embedUrl": "https://www.youtube.com/embed/rMlBLofHFc8?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.586Z",
+    "platform": "youtube",
+    "genre": "Terror"
+  },
+  {
+    "title": "Cocodrilo asesino",
+    "url": "https://youtu.be/xC04ZeE9vrU?si=jHKY7G7ct9GqsqY_",
+    "embedUrl": "https://www.youtube.com/embed/xC04ZeE9vrU?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.598Z",
+    "platform": "youtube",
+    "genre": "Terror"
+  },
+  {
+    "title": "Cuando las brujas arden",
+    "url": "https://youtu.be/1-b38hlnDQQ?feature=shared",
+    "embedUrl": "https://www.youtube.com/embed/1-b38hlnDQQ?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.598Z",
+    "platform": "youtube",
+    "genre": "Terror"
+  },
+  {
+    "title": "Destino la luna",
+    "url": "https://youtu.be/-aw-LwaGnJc?si=As5j3cZERseHXxyd",
+    "embedUrl": "https://www.youtube.com/embed/-aw-LwaGnJc?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.598Z",
+    "platform": "youtube",
+    "genre": "Ciencia ficción"
+  },
+  {
+    "title": "Hércules en la dimensión desconocida",
+    "url": "https://youtu.be/n3Za5H7KDYg?si=aCIgzLEKW6CsBqf_",
+    "embedUrl": "https://www.youtube.com/embed/n3Za5H7KDYg?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.599Z",
+    "platform": "youtube",
+    "genre": "Ciencia ficción"
+  },
+  {
+    "title": "Impacto solar fin del mundo",
+    "url": "https://youtu.be/SUdsve72wyk?si=9KbrizV1mSnLW10B",
+    "embedUrl": "https://www.youtube.com/embed/SUdsve72wyk?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.599Z",
+    "platform": "youtube",
+    "genre": "Ciencia ficción"
+  },
+  {
+    "title": "Los otros",
+    "url": "https://youtu.be/rYWkq_MS7DU?feature=shared",
+    "embedUrl": "https://www.youtube.com/embed/rYWkq_MS7DU?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.599Z",
+    "platform": "youtube",
+    "genre": "Terror"
+  },
+  {
+    "title": "Proyecto Andrómeda",
+    "url": "https://youtu.be/HezG0N5F8Hg?si=9AVrRp8uiB4NY_8q",
+    "embedUrl": "https://www.youtube.com/embed/HezG0N5F8Hg?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.599Z",
+    "platform": "youtube",
+    "genre": "Ciencia ficción"
+  },
+  {
+    "title": "Sherlock Holmes el perro de los baskerville",
+    "url": "https://youtu.be/1u3X5ef1E1o?si=Tsa7-9dlrSLF5byY",
+    "embedUrl": "https://www.youtube.com/embed/1u3X5ef1E1o?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.599Z",
+    "platform": "youtube",
+    "genre": "Aventura"
+  },
+  {
+    "title": "Sherlock Holmes el reino de los huesos",
+    "url": "https://youtu.be/t4t2akpc5vE?si=YxD90MDqD_ikzO-6",
+    "embedUrl": "https://www.youtube.com/embed/t4t2akpc5vE?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.599Z",
+    "platform": "youtube",
+    "genre": "Aventura"
+  },
+  {
+    "title": "Sherlock Holmes la voz del terror",
+    "url": "https://youtu.be/j2U_E4xtpK4?si=DFKuVkFVG0CJWfVz",
+    "embedUrl": "https://www.youtube.com/embed/j2U_E4xtpK4?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.599Z",
+    "platform": "youtube",
+    "genre": "Aventura"
+  },
+  {
+    "title": "Sherlock Holmes sin pistas",
+    "url": "https://youtu.be/RwZeDAGNTGs?si=8XiryBY-arY6SqOL",
+    "embedUrl": "https://www.youtube.com/embed/RwZeDAGNTGs?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.599Z",
+    "platform": "youtube",
+    "genre": "Aventura"
+  },
+  {
+    "title": "Tsunami",
+    "url": "https://youtu.be/CdwVIOAPpW4?si=QIxvI4te6qr9PHwO",
+    "embedUrl": "https://www.youtube.com/embed/CdwVIOAPpW4?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.599Z",
+    "platform": "youtube",
+    "genre": "Aventura"
+  },
+  {
+    "title": "Virus Apocalipsis final",
+    "url": "https://youtu.be/5MgZeM294Nw?si=QBLod719P0-rh_9d",
+    "embedUrl": "https://www.youtube.com/embed/5MgZeM294Nw?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.599Z",
+    "platform": "youtube",
+    "genre": "Ciencia ficción"
+  },
+  {
+    "title": "Aníbal",
+    "url": "https://www.youtube.com/watch?v=ED4gWQqHal0",
+    "embedUrl": "https://www.youtube.com/embed/ED4gWQqHal0?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.600Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "la emperatriz Mesalina",
+    "url": "https://www.youtube.com/watch?v=X_xzJUuwjA0",
+    "embedUrl": "https://www.youtube.com/embed/X_xzJUuwjA0?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.600Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "la invasión de los bárbaros",
+    "url": "https://www.youtube.com/watch?v=cvw9vRMzH9A",
+    "embedUrl": "https://www.youtube.com/embed/cvw9vRMzH9A?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.600Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "la bestia del volcán",
+    "url": "https://www.youtube.com/watch?v=9RVzYuAX2c0",
+    "embedUrl": "https://www.youtube.com/embed/9RVzYuAX2c0?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.600Z",
+    "platform": "youtube",
+    "genre": "Aventuras"
+  },
+  {
+    "title": "los dos gladiadores",
+    "url": "https://youtu.be/VPoJohseibU?si=jFL9V8NZPZQAfx44",
+    "embedUrl": "https://www.youtube.com/embed/VPoJohseibU?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.600Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "la caída del Imperio romano",
+    "url": "https://youtu.be/FFPhnseibU?si=lY1AMOcMtCWnIT7N",
+    "embedUrl": "https://www.youtube.com/embed/FFPhnseibU?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.600Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "la emperatriz Mesalina",
+    "url": "https://youtu.be/X_xzJUuwjA0?si=mBSYxYClNLL6JIkf",
+    "embedUrl": "https://www.youtube.com/embed/X_xzJUuwjA0?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.601Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "Maciste",
+    "url": "https://youtu.be/s0VDtT0nvHo?si=_FVJS8jWqp7yyhI_",
+    "embedUrl": "https://www.youtube.com/embed/s0VDtT0nvHo?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.601Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "gladiador de Roma",
+    "url": "https://youtu.be/Z0_x0MnZgFs?si=Ubllqm4ZzqnwU4qL",
+    "embedUrl": "https://www.youtube.com/embed/Z0_x0MnZgFs?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.601Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "Aníbal",
+    "url": "https://youtu.be/ED4gWQqHal0?si=SOopAe1xGJEUQaKv",
+    "embedUrl": "https://www.youtube.com/embed/ED4gWQqHal0?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.601Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "Julio César",
+    "url": "https://youtu.be/f0n-1wuKN8Y?si=KUY4DyPvX_vnrie",
+    "embedUrl": "https://www.youtube.com/embed/f0n-1wuKN8Y?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.601Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "escipión",
+    "url": "https://youtu.be/Up8y0bwNsBE?si=kCyWOPmVLDWy8Bw1",
+    "embedUrl": "https://www.youtube.com/embed/Up8y0bwNsBE?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.601Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "los tres invencibles",
+    "url": "https://youtu.be/xUBdg1-Ypu4?si=ZI4Jk0qhENHDKk-K",
+    "embedUrl": "https://www.youtube.com/embed/xUBdg1-Ypu4?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.601Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "Ben hur",
+    "url": "https://www.youtube.com/live/0P8vTfbgglk?si=lz4gFMs8cxOzlILV",
+    "embedUrl": "https://www.youtube.com/embed/0P8vTfbgglk?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.602Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "la rebelión de los gladiadores",
+    "url": "https://youtu.be/4nLpU6wt3qU?si=dtpHnPLPb7-LeUuB",
+    "embedUrl": "https://www.youtube.com/embed/4nLpU6wt3qU?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.602Z",
+    "platform": "youtube",
+    "genre": "Romanos"
+  },
+  {
+    "title": "bajo el signo del Roma",
+    "url": "https://youtu.be/JWOu4BHpVhg?si=1SZh0EzrgPjgSSFd",
+    "embedUrl": "https://www.youtube.com/embed/JWOu4BHpVhg?autoplay=1&rel=0",
+    "addedAt": "2025-08-20T11:47:44.602Z",
+    "platform": "youtube",
+    "genre": "Romanos"
   }
+  ]
 ]
