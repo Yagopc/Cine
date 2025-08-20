@@ -276,13 +276,16 @@
         let adSkipTimeout = null;
         let adSkippable = false;
 
-        // Cargar lista de localStorage al inicio
+        // Cargar lista de localStorage al inicio Y actualizar desde JSON remoto
         window.addEventListener('DOMContentLoaded', () => {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 try { videos = JSON.parse(saved); } catch { videos = []; }
             }
             showPlaylist(videos);
+            
+            // Nueva línea: actualizar automáticamente al iniciar
+            updateFromRemoteJson();
         });
         function saveList() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(videos));
@@ -420,8 +423,8 @@
             return entries;
         }
 
-        // Cargar desde JSON externo
-        updateBtn.addEventListener('click', async function() {
+        // Extraer la lógica de actualización a una función reutilizable
+        async function updateFromRemoteJson() {
             updateBtn.disabled = true;
             updateBtn.textContent = "Actualizando...";
             try {
@@ -438,13 +441,17 @@
                 videos = newList;
                 saveList();
                 showPlaylist(videos);
-                alert("Lista actualizada correctamente desde el archivo remoto.");
+                console.log("Lista actualizada correctamente desde el archivo remoto.");
             } catch (e) {
-                alert("Error actualizando la lista: " + e.message);
+                console.error("Error actualizando la lista: " + e.message);
+                // No mostrar alerta para que no sea intrusivo en carga automática
             }
             updateBtn.disabled = false;
             updateBtn.textContent = "Actualizar lista";
-        });
+        }
+
+        // Modificar el evento click del botón para usar la nueva función
+        updateBtn.addEventListener('click', updateFromRemoteJson);
 
         function showPlaylist(videos) {
             playlistDiv.innerHTML = '';
