@@ -101,26 +101,39 @@
     .search-container input:focus{ outline:4px solid var(--primary-color) }
 
     /* ====== Lista ====== */
-    .movie-list-container{
-      flex:1;display:flex;flex-direction:column;background:var(--light-bg);
-      border-radius:14px;padding:16px;box-shadow:0 6px 16px rgba(0,0,0,.35)
-    }
-    .movie-list-header{
-      display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;
-      padding-bottom:10px;border-bottom:1px solid var(--hover-color)
-    }
-    .movie-list-header h3{ color:var(--primary-color);font-size:22px }
-    .movie-list{
-      max-height:420px;overflow-y:auto;border-radius:10px;flex:1;padding:4px
-    }
 
-    /* ====== Scrollbar GRANDE (4 veces más grande) ====== */
-    .movie-list{ scrollbar-width:thick; scrollbar-color: var(--primary-color) var(--darker-bg); }
-    .movie-list::-webkit-scrollbar{ width:40px }
-    .movie-list::-webkit-scrollbar-track{ background:var(--darker-bg); border-radius:12px }
-    .movie-list::-webkit-scrollbar-thumb{ background:var(--primary-color); border-radius:12px }
-    .movie-list::-webkit-scrollbar-thumb:hover{ background:#3d8b40 }
+/* ====== Scrollbar MUY GRANDE para TV ====== */
+.movie-list { 
+    scrollbar-width: thick; 
+    scrollbar-color: var(--primary-color) var(--darker-bg);
+    padding-right: 8px; /* Espacio adicional a la derecha */
+}
 
+.movie-list::-webkit-scrollbar { 
+    width: 80px; /* Ancho muy aumentado para fácil acceso con mando */
+}
+
+.movie-list::-webkit-scrollbar-track { 
+    background: var(--darker-bg); 
+    border-radius: 12px;
+    margin: 10px 0; /* Espacio arriba y abajo */
+}
+
+.movie-list::-webkit-scrollbar-thumb { 
+    background: var(--primary-color); 
+    border-radius: 12px;
+    border: 4px solid var(--darker-bg); /* Borde para mejor visibilidad */
+}
+
+.movie-list::-webkit-scrollbar-thumb:hover { 
+    background: #3d8b40;
+    transform: scale(1.02); /* Efecto de agrandamiento al hover */
+}
+
+.movie-list::-webkit-scrollbar-button {
+    height: 20px; /* Botones de flecha más grandes */
+    background-color: var(--dark-bg);
+}
     .movie-item{
       padding:16px 18px;border-bottom:1px solid var(--hover-color);cursor:pointer;transition:background .15s, transform .08s;
       display:flex;justify-content:space-between;align-items:center;border-radius:10px;min-height:64px
