@@ -1,1 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>ListaTube – Carga automática desde URL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{ --accent:#0d6efd; --ok:#1fbf54; --okbg:#d7fadd; --danger:#c62828; }
+    body{ font-family: Arial, system-ui, sans-serif; margin:0; background:#111; color:#f5f5f5; }
+    .container{ max-width:960px; margin:20px auto; background:#1b1b1b; padding:18px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.35); }
+    h1{ margin:0 0 12px; text-align:center; font-weight:700; }
+    #status{ font-size:14px; margin:6px 0 12px; padding:8px 10px; border-radius:8px; background:#222; color:#bbb; display:none; }
+    iframe{ width:100%; height:440px; border:none; border-radius:12px; background:#000; margin: 10px 0 14px; }
+
+    .form{ display:flex; flex-wrap:wrap; gap:8px; }
+    .form input{ flex:1 1 240px; padding:10px; border-radius:8px; border:1px solid #333; background:#111; color:#eee; }
+    .form button{ padding:10px 14px; border:none; border-radius:8px; background:var(--accent); color:#fff; cursor:pointer; }
+    .form button:hover{ filter:brightness(.95); }
+
+    select{ width:100%; padding:10px; border-radius:8px; border:1px solid #333; background:#111; color:#eee; margin:10px 0; }
+
+    ul{ list-style:none; padding:0; margin:8px 0 0; max-height:320px; overflow:auto; }
+    li{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px; border-bottom:1px solid #2d2d2d; border-radius:8px; }
+    li.playing{ background:var(--okbg); color:#052b14; }
+    .title{ cursor:pointer; flex:1; }
+    .controls button{ margin-left:6px; border:none; background:#2a2a2a; color:#eee; cursor:pointer; font-size:16px; border-radius:6px; padding:6px 8px; }
+    .controls button:hover{ background:#3a3a3a; }
+
+    .actions{ margin-top:16px; display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .actions button, .actions input[type=file]{ padding:12px; border-radius:8px; border:1px solid #333; background:#161616; color:#eee; cursor:pointer; }
+    .actions button.primary{ background:var(--accent); border:none; color:#fff; }
+    .actions button.danger{ border-color:var(--danger); color:#fff; background:#2a0f12; }
+
+    @media (max-width:760px){ .actions{ grid-template-columns:repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ListaTube</h1>
+    <div id="status" role="status" aria-live="polite"></div>
+
+    <!-- Reproductor de YouTube -->
+    <iframe id="player" title="Reproductor YouTube" allow="autoplay; fullscreen; encrypted-media" allowfullscreen playsinline></iframe>
+
+    <!-- Formulario para agregar manualmente -->
+    <div class="form">
+      <input id="title" type="text" placeholder="Título del vídeo" />
+      <input id="url" type="text" placeholder="URL de YouTube (watch, youtu.be o embed)" />
+      <button id="addBtn">Agregar</button>
+    </div>
+
+    <!-- Selector desplegable -->
+    <select id="videoSelect">
+      <option value="">-- Selecciona un video --</option>
+    </select>
+
+    <!-- Listado -->
+    <ul id="videoList"></ul>
+
+    <!-- Acciones -->
+    <div class="actions">
+      <button id="exportBtn" class="primary">Exportar listatube.json</button>
+      <input id="fileInput" type="file" accept="application/json" title="Importar listatube.json" />
+      <button id="clearBtn" class="danger">Limpiar Lista</button>
+      <button id="updateBtn">Update (cargar desde URL)</button>
+    </div>
+  </div>
+
+<script>
+  // ================= Configuración =================
+  // Cambia aquí la URL remota de la lista JSON (debe devolver un array de objetos con {title, url})
+  const UPDATE_URL = "https://yagopc.github.io/Cine/listatube.json";
+
+  // ================= Estado =================
+  let videos = [];
+  let currentIndex = -1;
+
+  // ================= Utilidades =================
+  function setStatus(msg, ok){
+    const el = document.getElementById('status');
+    el.style.display = 'block';
+    el.textContent = msg;
+    el.style.background = ok ? '#12351d' : '#2a1a1a';
+    el.style.color = ok ? '#b7f0c9' : '#ffb3b3';
+  }
+
+  function trim(s){ return (s||'').toString().trim(); }
+
+  function getVideoId(raw){
+    try{
+      const u = new URL(raw);
+      const host = u.hostname;
+      if(host.includes('youtu.be')) return u.pathname.slice(1);
+      if(host.includes('youtube.com')){
+        // watch?v=, embed/, shorts/, live/
+        if(u.pathname.startsWith('/embed/')) return u.pathname.split('/')[2];
+        if(u.pathname.startsWith('/shorts/')) return u.pathname.split('/')[2];
+        if(u.pathname.startsWith('/live/')) return u.pathname.split('/')[2];
+        const v = u.searchParams.get('v');
+        if(v) return v;
+      }
+    }catch(e){ /* noop */ }
+    return null;
+  }
+
+  function toEmbedURL(url){
+    const id = getVideoId(url);
+    return id ? `https://www.youtube.com/embed/${id}` : null;
+  }
+
+  function isRecord(obj){ return obj && typeof obj.title==='string' && typeof obj.url==='string'; }
+
+  function normalizeRecord(obj){
+    const title = trim(obj.title);
+    const embed = toEmbedURL(obj.url) || (obj.embedUrl ? toEmbedURL(obj.embedUrl) : null);
+    if(!title || !embed) return null;
+    return { title, url: embed };
+  }
+
+  // ================= Persistencia =================
+  function loadFromStorage(){
+    try{
+      const raw = localStorage.getItem('videos');
+      if(!raw) return [];
+      const arr = JSON.parse(raw);
+      if(!Array.isArray(arr)) return [];
+      return arr.map(normalizeRecord).filter(Boolean);
+    }catch(e){ return []; }
+  }
+
+  function saveToStorage(){
+    try{ localStorage.setItem('videos', JSON.stringify(videos)); }catch(e){}
+  }
+
+  // ================= Carga remota (robusta) =================
+  // XHR puro para máxima compatibilidad (Smart TV y navegadores antiguos)
+  function xhrJSON(url, onOk, onErr){
+    try{
+      const xhr = new XMLHttpRequest();
+      const bust = (url.indexOf('?')>-1? '&':'?') + '_cb=' + Date.now();
+      xhr.open('GET', url + bust, true);
+      xhr.onreadystatechange = function(){
+        if(xhr.readyState === 4){
+          if(xhr.status >= 200 && xhr.status < 300){
+            let data = null;
+            try{ data = JSON.parse(xhr.responseText); }catch(e){}
+            if(data) onOk && onOk(data); else onErr && onErr(new Error('Respuesta no es JSON válido'));
+          }else{
+            onErr && onErr(new Error('HTTP '+xhr.status));
+          }
+        }
+      };
+      xhr.send();
+    }catch(err){ onErr && onErr(err); }
+  }
+
+  function loadFromURL(autoPlayFirst){
+    setStatus('Cargando lista remota…', true);
+    xhrJSON(UPDATE_URL, function(data){
+      if(!Array.isArray(data)){
+        setStatus('El JSON remoto no es una lista.', false);
+        return;
+      }
+      const normalized = data.map(normalizeRecord).filter(Boolean);
+      if(!normalized.length){ setStatus('La lista remota no contiene registros válidos.', false); return; }
+      videos = normalized;
+      saveToStorage();
+      renderAll();
+      setStatus('Lista cargada correctamente desde URL.', true);
+      if(autoPlayFirst && videos.length){ playByIndex(0); }
+    }, function(err){
+      setStatus('No se pudo cargar desde URL ('+ err.message +'). Usando copia local si existe.', false);
+      videos = loadFromStorage();
+      renderAll();
+      if(autoPlayFirst && videos.length){ playByIndex(0); }
+    });
+  }
+
+  // ================= Reproductor y UI =================
+  function playByIndex(index){
+    index = Number(index);
+    if(isNaN(index) || index<0 || index>=videos.length) return;
+    currentIndex = index;
+    const iframe = document.getElementById('player');
+    const src = videos[index].url + '?autoplay=1&rel=0&modestbranding=1&fs=1';
+    // Reiniciar src siempre para forzar reproducción
+    iframe.src = src;
+    highlightPlaying();
+    // Intentar entrar en pantalla completa (si lo permite el navegador/TV)
+    setTimeout(()=>{
+      if(iframe.requestFullscreen) iframe.requestFullscreen();
+      else if(iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+      else if(iframe.msRequestFullscreen) iframe.msRequestFullscreen();
+    }, 300);
+  }
+
+  function addVideo(){
+    const t = trim(document.getElementById('title').value);
+    const u = trim(document.getElementById('url').value);
+    const embed = toEmbedURL(u);
+    if(!t || !embed){ alert('Introduce un título y una URL válida de YouTube.'); return; }
+    videos.push({title:t, url:embed});
+    saveToStorage();
+    renderAll();
+    document.getElementById('title').value = '';
+    document.getElementById('url').value = '';
+  }
+
+  function deleteVideo(index){
+    if(!confirm('¿Eliminar este video?')) return;
+    videos.splice(index,1);
+    if(currentIndex === index) currentIndex = -1;
+    if(currentIndex > index) currentIndex -= 1;
+    saveToStorage();
+    renderAll();
+  }
+
+  function editVideo(index){
+    const nt = prompt('Editar título:', videos[index].title);
+    if(nt === null) return; // cancel
+    const t = trim(nt);
+    if(!t){ alert('El título no puede quedar vacío.'); return; }
+    videos[index].title = t;
+    saveToStorage();
+    renderAll();
+  }
+
+  function clearList(){
+    if(!confirm('¿Seguro que quieres limpiar toda la lista?')) return;
+    videos = [];
+    currentIndex = -1;
+    saveToStorage();
+    renderAll();
+    document.getElementById('player').src = '';
+  }
+
+  function exportJSON(){
+    const data = JSON.stringify(videos, null, 2);
+    try{
+      const blob = new Blob([data], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'listatube.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }catch(e){ alert('Exportación no soportada en este navegador/TV.'); }
+  }
+
+  function importJSON(ev){
+    const file = ev.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      try{
+        const parsed = JSON.parse(e.target.result);
+        if(!Array.isArray(parsed)) throw new Error('El JSON debe ser una lista');
+        const normalized = parsed.map(normalizeRecord).filter(Boolean);
+        if(!normalized.length) throw new Error('No hay registros válidos');
+        videos = normalized;
+        saveToStorage();
+        renderAll();
+      }catch(err){ alert('Archivo inválido: '+ err.message); }
+    };
+    reader.readAsText(file);
+    ev.target.value = '';
+  }
+
+  function playSelected(){
+    const idx = document.getElementById('videoSelect').value;
+    if(idx !== '') playByIndex(idx);
+  }
+
+  function highlightPlaying(){
+    const list = document.getElementById('videoList');
+    [...list.children].forEach((li, i)=>{
+      if(i===currentIndex) li.classList.add('playing'); else li.classList.remove('playing');
+    });
+    const sel = document.getElementById('videoSelect');
+    sel.innerHTML = '<option value="">-- Selecciona un video --</option>';
+    videos.forEach((v,i)=>{
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = (i===currentIndex? '▶ ': '') + v.title.substring(0,40);
+      if(i===currentIndex) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function renderList(){
+    const list = document.getElementById('videoList');
+    list.innerHTML = '';
+    videos.forEach((video, index)=>{
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.className = 'title';
+      span.textContent = video.title.substring(0,40);
+      span.title = video.title;
+      span.onclick = ()=> playByIndex(index);
+
+      const ctrls = document.createElement('span');
+      ctrls.className = 'controls';
+      const edit = document.createElement('button'); edit.textContent = '✏️'; edit.title='Editar título'; edit.onclick = ()=> editVideo(index);
+      const del  = document.createElement('button'); del.textContent = '🗑️'; del.title='Eliminar'; del.onclick = ()=> deleteVideo(index);
+      ctrls.appendChild(edit); ctrls.appendChild(del);
+
+      if(index===currentIndex) li.classList.add('playing');
+      li.appendChild(span); li.appendChild(ctrls);
+      list.appendChild(li);
+    });
+  }
+
+  function renderAll(){ renderList(); highlightPlaying(); }
+
+  // ================= Listeners =================
+  document.getElementById('addBtn').addEventListener('click', addVideo);
+  document.getElementById('exportBtn').addEventListener('click', exportJSON);
+  document.getElementById('fileInput').addEventListener('change', importJSON);
+  document.getElementById('clearBtn').addEventListener('click', clearList);
+  document.getElementById('updateBtn').addEventListener('click', ()=> loadFromURL(true));
+  document.getElementById('videoSelect').addEventListener('change', playSelected);
+
+  // ================= Inicio automático =================
+  // 1) Intenta cargar SIEMPRE desde la URL remota al iniciar.
+  // 2) Si falla, usa localStorage como respaldo.
+  window.addEventListener('DOMContentLoaded', function(){
+    loadFromURL(true); // auto-carga + reproducir el primero si existe
+  });
+</script>
+</body>
+</html>
 
