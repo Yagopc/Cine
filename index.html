@@ -2,26 +2,28 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>ListaTube Cine</title>
+  <title>ListaTube Cine TV</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 10px; background: #000; color: #fff; }
-    h1 { text-align: center; margin-bottom: 15px; }
-    .container { max-width: 900px; margin: auto; background: #111; padding: 15px; border-radius: 10px; }
+    body { font-family: Arial, sans-serif; margin: 0; background: #000; color: #fff; }
+    h1 { text-align: center; padding: 15px; font-size: 28px; }
+    .container { max-width: 960px; margin: auto; background: #111; padding: 15px; border-radius: 10px; }
     iframe { width: 100%; height: 480px; border: none; border-radius: 10px; margin-bottom: 15px; background: #000; }
-    select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; font-size: 16px; }
-    ul { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; margin: 0; }
-    li { padding: 10px; border-bottom: 1px solid #333; cursor: pointer; }
-    li:hover { background: #444; }
-    li.active { background: green; color: #fff; font-weight: bold; }
-    .actions { margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px; }
-    .actions button, .actions input[type=file] { flex: 1; padding: 10px; border-radius: 5px; border: none; cursor: pointer; font-size: 16px; }
-    .actions button { background: #007BFF; color: white; }
+    select { width: 100%; padding: 15px; margin: 10px 0; border-radius: 8px; border: none; font-size: 20px; background: #222; color: #fff; }
+    ul { list-style: none; padding: 0; max-height: 350px; overflow-y: auto; margin: 0; }
+    li { padding: 15px; border-bottom: 1px solid #333; cursor: pointer; font-size: 20px; }
+    li:hover, li.focused { background: #444; }
+    li.active { background: green !important; color: #fff; font-weight: bold; }
+    .actions { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 12px; }
+    .actions button, .actions input[type=file] {
+      flex: 1 1 45%; padding: 18px; border-radius: 8px; border: none; cursor: pointer; 
+      font-size: 20px; background: #007BFF; color: white;
+    }
     .actions button:hover { background: #0056b3; }
   </style>
 </head>
 <body>
 <div class="container">
-  <h1>🎬 ListaTube Cine</h1>
+  <h1>🎬 ListaTube Cine - Smart TV</h1>
 
   <!-- Reproductor -->
   <iframe id="player" allowfullscreen></iframe>
@@ -47,14 +49,14 @@
   const UPDATE_URL = "https://yagopc.github.io/Cine/listatube.json";
   let videos = JSON.parse(localStorage.getItem("videos")) || [];
   let currentIndex = -1;
+  let focusedIndex = 0;
+  let player;
 
-  // Guardar en localStorage
   function saveVideos() {
     localStorage.setItem("videos", JSON.stringify(videos));
     renderList();
   }
 
-  // Obtener ID de YouTube
   function getVideoId(url) {
     try {
       let u = new URL(url);
@@ -65,22 +67,20 @@
     return null;
   }
 
-  // Reproducir vídeo
   function playVideo(index) {
     if (!videos[index]) return;
     currentIndex = index;
     const videoId = getVideoId(videos[index].url);
-    const player = document.getElementById("player");
+    player = document.getElementById("player");
 
     if (videoId) {
-      player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&fs=1`;
+      player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`;
     } else {
       player.src = videos[index].url;
     }
 
     renderList();
 
-    // Pantalla completa automática
     setTimeout(() => {
       if (player.requestFullscreen) {
         player.requestFullscreen();
@@ -92,13 +92,11 @@
     }, 500);
   }
 
-  // Selección desde desplegable
   function playSelected() {
     const index = document.getElementById("videoSelect").value;
     if (index !== "") playVideo(index);
   }
 
-  // Eliminar lista completa
   function clearList() {
     if (confirm("¿Seguro que quieres borrar toda la lista?")) {
       videos = [];
@@ -107,7 +105,6 @@
     }
   }
 
-  // Exportar JSON
   function exportJSON() {
     const data = videos.map(v => ({ title: v.title, url: v.url }));
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -117,7 +114,6 @@
     a.click();
   }
 
-  // Importar JSON
   function importJSON(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -133,7 +129,6 @@
     reader.readAsText(file);
   }
 
-  // Cargar desde URL online
   async function updateFromURL() {
     try {
       const response = await fetch(UPDATE_URL);
@@ -146,7 +141,6 @@
     }
   }
 
-  // Pintar lista y selector
   function renderList() {
     const list = document.getElementById("videoList");
     const select = document.getElementById("videoSelect");
@@ -154,14 +148,13 @@
     select.innerHTML = '<option value="">-- Selecciona una película --</option>';
 
     videos.forEach((video, index) => {
-      // lista
       const li = document.createElement("li");
       li.textContent = video.title;
       li.onclick = () => playVideo(index);
       if (index == currentIndex) li.classList.add("active");
+      if (index == focusedIndex) li.classList.add("focused");
       list.appendChild(li);
 
-      // desplegable
       const opt = document.createElement("option");
       opt.value = index;
       opt.textContent = video.title;
@@ -170,12 +163,37 @@
     });
   }
 
-  // Inicializar
-  (async () => {
-    if (videos.length === 0) {
-      await updateFromURL();
-    } else {
+  // 🎮 Soporte mando TV (flechas y Enter)
+  document.addEventListener("keydown", (e) => {
+    const listItems = document.querySelectorAll("#videoList li");
+    if (!listItems.length) return;
+
+    if (e.key === "ArrowDown") {
+      focusedIndex = (focusedIndex + 1) % listItems.length;
       renderList();
+    } else if (e.key === "ArrowUp") {
+      focusedIndex = (focusedIndex - 1 + listItems.length) % listItems.length;
+      renderList();
+    } else if (e.key === "Enter") {
+      playVideo(focusedIndex);
+    }
+  });
+
+  // ▶️ Autoplay continuo usando API de YouTube
+  window.addEventListener("message", function(event) {
+    if (event.data && event.data.event === "onStateChange" && event.data.info === 0) {
+      // Estado 0 = vídeo terminado
+      if (currentIndex + 1 < videos.length) {
+        playVideo(currentIndex + 1);
+      }
+    }
+  });
+
+  (async () => {
+    try {
+      await updateFromURL();
+    } catch {
+      renderList(); // fallback a localStorage
     }
   })();
 </script>
