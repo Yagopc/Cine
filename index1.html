@@ -1,10 +1,17 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Películas</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  />
+  <title>Reproductor de Películas (TV)</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
   <style>
     :root{
       --primary-color:#4CAF50;
@@ -21,7 +28,7 @@
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{
-      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
       background:var(--dark-bg);
       color:var(--text-color);
       min-height:100vh;
@@ -34,9 +41,12 @@
       width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;
       box-shadow:0 6px 18px rgba(0,0,0,.55);position:relative
     }
+    /* iframe con permisos de TV */
     .player-container iframe{
       width:100%;height:100%;border:none;
     }
+
+    /* ====== CONTROLES GRANDES PARA TV ====== */
     .buttons{
       display:flex;gap:14px;flex-wrap:wrap;justify-content:center
     }
@@ -51,17 +61,46 @@
       outline:none;
     }
     button:active{ transform:scale(.98) }
+    button.secondary{ background:var(--secondary-color) }
     button.update{ background:var(--accent-color) }
+    button.danger{ background:var(--danger) }
+
+    /* Estado de enfoque visible para mando/teclado */
     .focusable:focus, .focusable.focused, button:focus{
       outline:4px solid var(--focus-outline);
       outline-offset:2px;
       box-shadow:0 0 0 4px rgba(255,213,79,.25);
     }
+
+    /* Botón editar redondo, más grande para TV */
     .edit-btn{
       background:#ffa500 !important; padding:12px !important; border-radius:50% !important;
       font-size:18px !important; min-width:48px !important; min-height:48px !important;
       display:flex; align-items:center; justify-content:center
     }
+
+    /* ====== Filtros de género ====== */
+    .genre-filter-container{ text-align:center }
+    .genre-main{ border-radius:12px }
+    .genre-buttons{
+      display:none;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:8px;padding-bottom:6px
+    }
+    .genre-buttons.show{ display:flex }
+    .genre-option{
+      background:var(--darker-bg);border:1px solid var(--hover-color);border-radius:10px;
+      color:var(--text-color);min-width:140px;justify-content:center;padding:12px 18px;font-size:16px
+    }
+    .genre-option.active{ background:var(--primary-color); color:#fff }
+
+    /* ====== Buscador ====== */
+    .search-container{ width:100%;max-width:700px;margin:0 auto 6px }
+    .search-container input{
+      width:100%;padding:16px 20px;border-radius:30px;border:none;background:var(--light-bg);
+      color:var(--text-color);font-size:18px
+    }
+    .search-container input:focus{ outline:4px solid var(--primary-color) }
+
+    /* ====== Lista ====== */
     .movie-list-container{
       flex:1;display:flex;flex-direction:column;background:var(--light-bg);
       border-radius:14px;padding:16px;box-shadow:0 6px 16px rgba(0,0,0,.35)
@@ -74,11 +113,14 @@
     .movie-list{
       max-height:420px;overflow-y:auto;border-radius:10px;flex:1;padding:4px
     }
+
+    /* ====== Scrollbar GRANDE (4 veces más grande) ====== */
     .movie-list{ scrollbar-width:thick; scrollbar-color: var(--primary-color) var(--darker-bg); }
-    .movie-list::-webkit-scrollbar{ width:22px }
+    .movie-list::-webkit-scrollbar{ width:40px }
     .movie-list::-webkit-scrollbar-track{ background:var(--darker-bg); border-radius:12px }
     .movie-list::-webkit-scrollbar-thumb{ background:var(--primary-color); border-radius:12px }
     .movie-list::-webkit-scrollbar-thumb:hover{ background:#3d8b40 }
+
     .movie-item{
       padding:16px 18px;border-bottom:1px solid var(--hover-color);cursor:pointer;transition:background .15s, transform .08s;
       display:flex;justify-content:space-between;align-items:center;border-radius:10px;min-height:64px
@@ -97,7 +139,30 @@
       font-size:20px; opacity:.85; transition:opacity .15s
     }
     .movie-item .actions i:hover, .movie-item .actions button:hover{ opacity:1 }
+
     .no-movies{ padding:30px;text-align:center;color:var(--text-secondary) }
+
+    .movies-count-container{ text-align:center; color:var(--text-secondary); font-size:16px }
+
+    /* ====== Modales ====== */
+    .modal{
+      display:none; position:fixed; z-index:100; inset:0; background:rgba(0,0,0,.8);
+      overflow:auto; backdrop-filter:blur(5px)
+    }
+    .modal-content{
+      background:var(--light-bg); margin:5% auto; padding:26px; border-radius:16px; width:92%; max-width:680px; position:relative;
+      box-shadow:0 10px 25px rgba(0,0,0,.35); animation:modalFadeIn .25s
+    }
+    @keyframes modalFadeIn{ from{opacity:0; transform:translateY(-18px)} to{opacity:1; transform:translateY(0)} }
+    .close{ color:var(--text-secondary); position:absolute; right:20px; top:14px; font-size:32px; font-weight:bold; cursor:pointer }
+    .close:hover{ color:var(--text-color) }
+    input[type="text"], input[type="file"], select{
+      width:100%; padding:14px; margin:10px 0; border:1px solid var(--hover-color); border-radius:12px;
+      background:var(--darker-bg); color:var(--text-color); font-size:16px
+    }
+    input[type="text"]:focus, input[type="file"]:focus, select:focus{ outline:4px solid var(--primary-color) }
+
+    /* ====== Notificaciones ====== */
     .notification{
       position:fixed; bottom:20px; right:20px; background:var(--primary-color); color:#fff;
       padding:16px 22px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.45); z-index:1000;
@@ -106,20 +171,17 @@
     .notification.show{ transform:translateY(0); opacity:1 }
     .loading{ display:inline-block; width:22px; height:22px; border:3px solid rgba(255,255,255,.35); border-radius:50%; border-top-color:#fff; animation:spin 1s linear infinite }
     @keyframes spin{ to{ transform:rotate(360deg) } }
+
+    /* Responsive para TV */
     @media (max-width:768px){
       .buttons{ flex-direction:column; align-items:stretch }
+      .genre-option{ min-width:unset }
       .movie-list{ max-height:60vh }
     }
   </style>
 </head>
 <body>
   <div class="container">
-
-    <!-- Botón actualizar -->
-    <div class="buttons">
-      <button id="updateMoviesBtn" class="update focusable" aria-label="Actualizar"><i class="fas fa-sync-alt"></i> Actualizar</button>
-    </div>
-
     <!-- Reproductor -->
     <div class="player-container" id="playerContainer">
       <iframe
@@ -129,6 +191,29 @@
         allowfullscreen
         referrerpolicy="origin"
       ></iframe>
+    </div>
+
+    <!-- Botones principales (solo añadir y actualizar) -->
+    <div class="buttons">
+      <button id="addMovieBtn" class="focusable" aria-label="Añadir película"><i class="fas fa-plus"></i> Añadir Película</button>
+      <button id="updateMoviesBtn" class="update focusable" aria-label="Actualizar"><i class="fas fa-sync-alt"></i> Actualizar</button>
+    </div>
+
+    <!-- Filtro de género -->
+    <div class="genre-filter-container">
+      <button id="genreFilterBtn" class="genre-main focusable" aria-haspopup="true"><i class="fas fa-filter"></i> Género</button>
+      <div class="genre-buttons" id="genreButtons"></div>
+    </div>
+
+    <!-- Contadores -->
+    <div class="movies-count-container">
+      <span id="totalMoviesCount">0 películas en total</span> |
+      <span id="filteredMoviesCount">0 coincidencias</span>
+    </div>
+
+    <!-- Buscador -->
+    <div class="search-container">
+      <input class="focusable" tabindex="0" type="text" id="searchInput" placeholder="Buscar películas..." aria-label="Buscar películas">
     </div>
 
     <!-- Lista de películas -->
@@ -144,7 +229,7 @@
   <div id="addMovieModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-content">
       <span class="close" role="button" aria-label="Cerrar modal">&times;</span>
-      <h2 id="modalTitle"><i class="fas fa-edit"></i> Editar Película</h2>
+      <h2 id="modalTitle"><i class="fas fa-plus-circle"></i> Añadir Nueva Película</h2>
       <form id="movieForm" autocomplete="off">
         <label for="movieTitle">Título:</label>
         <input type="text" id="movieTitle" required>
@@ -171,29 +256,54 @@
     const GENRES = [
       "Romanos","Aventura","Drama","Ciencia ficción","Policíaca","Western","Suspense","Fantasía","Comedia","Terror","Drama"
     ];
+
+    // Referencias UI
+    const addMovieBtn = document.getElementById('addMovieBtn');
+    const updateMoviesBtn = document.getElementById('updateMoviesBtn');
+
     const addMovieModal = document.getElementById('addMovieModal');
     const closeButtons = document.querySelectorAll('.close');
     const movieForm = document.getElementById('movieForm');
     const moviesList = document.getElementById('moviesList');
     const videoPlayer = document.getElementById('videoPlayer');
     const playerContainer = document.getElementById('playerContainer');
+
+    const searchInput = document.getElementById('searchInput');
+
     const notification = document.getElementById('notification');
     const notificationText = document.getElementById('notificationText');
-    const updateMoviesBtn = document.getElementById('updateMoviesBtn');
+    const totalMoviesCount = document.getElementById('totalMoviesCount');
+    const filteredMoviesCount = document.getElementById('filteredMoviesCount');
+
+    const genreFilterBtn = document.getElementById('genreFilterBtn');
+    const genreButtons = document.getElementById('genreButtons');
     const movieGenreSelect = document.getElementById('movieGenre');
     const modalTitle = document.getElementById('modalTitle');
     const movieFormSubmitBtn = document.getElementById('movieFormSubmitBtn');
 
     let movies = [];
     let currentPlayingMovie = null;
+    let currentSearch = '';
+    let currentGenreFilter = 'all';
     let isEditMode = false;
     let editMovieIndex = null;
-    let currentListIndex = 0;
 
+    // Foco/TV
+    let currentButtonIndex = 0;     // índice dentro de la fila de botones
+    let currentListIndex = 0;       // índice dentro de la lista de películas
+    let currentFocusArea = 'buttons'; // 'buttons' | 'list' | 'genre' | 'search' | 'modal'
+
+    const topButtons = () => Array.from(document.querySelectorAll('.buttons button'));
+    const isTVKey = (e) => ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter',' '].includes(e.key) || e.keyCode === 461;
+
+    /* =========================
+       Utilidades UI
+       ========================= */
     function showNotification(message, type = 'success', loading = false) {
       notificationText.textContent = message;
       const colors = { error:'#f44336', warning:'#ff9800', info:'#2196F3', success:'#4CAF50' };
       notification.style.backgroundColor = colors[type] || colors.success;
+
       const icon = notification.querySelector('i');
       if (loading) icon.className = 'loading';
       else {
@@ -206,20 +316,68 @@
       if (!loading) setTimeout(()=>notification.classList.remove('show'), 3000);
     }
 
+    function updateMoviesCount() {
+      totalMoviesCount.textContent = `${movies.length} ${movies.length===1?'película en total':'películas en total'}`;
+    }
+
     function fillGenreSelect() {
       movieGenreSelect.innerHTML = `<option value="">Selecciona un género</option>`;
       GENRES.forEach(g => movieGenreSelect.innerHTML += `<option value="${g}">${g}</option>`);
     }
 
+    function fillGenreButtons() {
+      let html = `<button class="genre-option focusable ${currentGenreFilter === 'all' ? 'active' : ''}" data-genre="all" tabindex="0">Todos</button>`;
+      GENRES.forEach(g => html += `<button class="genre-option focusable ${currentGenreFilter === g ? 'active' : ''}" data-genre="${g}" tabindex="0">${g}</button>`);
+      genreButtons.innerHTML = html;
+    }
+
+    function getGenreOptions(){ return document.querySelectorAll('.genre-option'); }
+
+    /* =========================
+       Gestión de datos
+       ========================= */
+    function loadMoviesFromStorage() {
+      const moviesFromStorage = localStorage.getItem('peliculas');
+      if (!moviesFromStorage) return [];
+      try {
+        const parsed = JSON.parse(moviesFromStorage);
+        return parsed.map(movie => {
+          if (!movie.addedAt) movie.addedAt = new Date().toISOString();
+          if (!movie.platform) movie.platform = detectPlatform(movie.url);
+          if (!movie.genre || !GENRES.includes(movie.genre)) movie.genre = 'Aventura';
+          movie.embedUrl = convertToEmbedUrl(movie.url);
+          return movie;
+        });
+      } catch(e){ console.error('Error al parsear películas:', e); return []; }
+    }
+
+    function saveMoviesToStorage(arr) {
+      arr.sort((a,b)=>a.title.localeCompare(b.title));
+      localStorage.setItem('peliculas', JSON.stringify(arr));
+      updateMoviesCount();
+      renderMovies();
+    }
+
+    function addMovie(movie) {
+      movies.push(movie);
+      saveMoviesToStorage(movies);
+      renderMovies();
+    }
+
+    /* =========================
+       Detección / Embed
+       ========================= */
     function detectPlatform(url) {
       if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
       if (url.includes('dailymotion.com') || url.includes('dai.ly')) return 'dailymotion';
       if (url.includes('ok.ru') || url.includes('odnoklassniki.ru')) return 'ok';
       return 'unknown';
     }
-    function convertToEmbedUrl(url) {
+
+        function convertToEmbedUrl(url) {
       const platform = detectPlatform(url);
       if (url.includes('embed')) {
+        // nos aseguramos de que tenga autoplay si ya es embed
         if (!/autoplay=1/.test(url)) {
           const sep = url.includes('?') ? '&' : '?';
           return `${url}${sep}autoplay=1`;
@@ -240,6 +398,7 @@
           break;
         }
         case 'dailymotion':{
+          // Soporta parámetros api=postMessage para posibles controles
           const id = (url.match(/^.+dailymotion.com\/(video|hub)\/([^_?#/]+)/)?.[2])
                    || (url.includes('dai.ly/') ? url.split('dai.ly/')[1].split(/[?&#]/)[0] : '');
           if (id) return `https://www.dailymotion.com/embed/video/${id}?autoplay=1&mute=0&api=postMessage`;
@@ -256,14 +415,27 @@
           break;
         }
       }
-      return url;
+      return url; // fallback
     }
 
+    /* =========================
+       Render de lista
+       ========================= */
     function renderMovies() {
       moviesList.innerHTML = '';
       let filtered = [...movies];
+
+      if (currentSearch) filtered = filtered.filter(m => m.title.toLowerCase().includes(currentSearch));
+      if (currentGenreFilter !== 'all') filtered = filtered.filter(m => m.genre === currentGenreFilter);
+
+      totalMoviesCount.textContent = `${movies.length} ${movies.length === 1 ? 'película en total' : 'películas en total'}`;
+      filteredMoviesCount.textContent = `${filtered.length} ${filtered.length === 1 ? 'coincidencia' : 'coincidencias'}`;
+
       if (!filtered.length){
-        moviesList.innerHTML = `<div class="no-movies">No hay películas en la lista</div>`;
+        const msg = currentSearch || currentGenreFilter !== 'all'
+          ? 'No hay películas que coincidan con los filtros actuales'
+          : 'No hay películas en la lista';
+        moviesList.innerHTML = `<div class="no-movies">${msg}</div>`;
       } else {
         filtered.forEach((movie, idx) => {
           const el = document.createElement('div');
@@ -287,7 +459,6 @@
               <button class="edit-btn focusable" title="Editar" data-action="edit" data-url="${movie.url}" tabindex="0" aria-label="Editar ${movie.title}">
                 <i class="fas fa-edit"></i>
               </button>
-              <i class="fas fa-trash focusable" role="button" tabindex="0" data-url="${movie.url}" data-action="delete" title="Eliminar" aria-label="Eliminar ${movie.title}"></i>
             </div>
           `;
 
@@ -296,13 +467,15 @@
             el.classList.add('selected');
             playMovie(movie);
             currentListIndex = idx;
+            currentFocusArea = 'list';
             ensureVisible(el);
           });
+
           moviesList.appendChild(el);
         });
       }
 
-      // Eventos de editar y borrar
+      // Eventos de editar
       document.querySelectorAll('button[data-action="edit"]').forEach(btn=>{
         btn.addEventListener('click', e=>{
           e.stopPropagation();
@@ -317,16 +490,12 @@
           modalTitle.innerHTML = '<i class="fas fa-edit"></i> Editar Película';
           movieFormSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar cambios';
           addMovieModal.style.display = 'block';
+          currentFocusArea = 'modal';
           trapFocus(addMovieModal);
         });
       });
-      document.querySelectorAll('[data-action="delete"]').forEach(btn=>{
-        btn.addEventListener('click', e=>{
-          e.stopPropagation();
-          deleteMovie(btn.dataset.url);
-        });
-      });
 
+      // En TV: si hay elementos, coloca el foco en el seleccionado o primero
       const items = Array.from(document.querySelectorAll('.movie-item'));
       if (items.length){
         const target = items[Math.min(currentListIndex, items.length-1)];
@@ -334,41 +503,102 @@
       }
     }
 
+    /* =========================
+       Reproducción
+       ========================= */
     function playMovie(movie) {
       if (!movie || !movie.embedUrl) return;
       videoPlayer.src = movie.embedUrl;
       currentPlayingMovie = movie;
+
       showNotification(`Reproduciendo: ${movie.title}`, 'info');
+
+      // Intento de pantalla completa (mejor en el contenedor para TV)
       setTimeout(() => {
         enterFullscreen();
+        // Intento de activar sonido en YouTube via postMessage (si el navegador lo permite)
         try{
           if (movie.platform === 'youtube' && videoPlayer && videoPlayer.contentWindow){
             videoPlayer.contentWindow.postMessage(JSON.stringify({"event":"command","func":"unMute","args":[]}), '*');
             videoPlayer.contentWindow.postMessage(JSON.stringify({"event":"command","func":"playVideo","args":[]}), '*');
           }
-        }catch(err){}
+        }catch(err){ /* silencioso */ }
       }, 800);
     }
 
-    function deleteMovie(movieUrl) {
-      if (confirm('¿Estás seguro de que quieres eliminar esta película?')) {
-        if (currentPlayingMovie && currentPlayingMovie.url === movieUrl) {
-          currentPlayingMovie = null;
-          videoPlayer.src = '';
-        }
-        movies = movies.filter(m => m.url !== movieUrl);
-        saveMoviesToStorage(movies);
-        showNotification('Película eliminada');
-        renderMovies();
-      }
-    }
+    /* =========================
+       Cargar/Actualizar
+       ========================= */
 
-    function saveMoviesToStorage(arr) {
-      arr.sort((a,b)=>a.title.localeCompare(b.title));
-      localStorage.setItem('peliculas', JSON.stringify(arr));
+    // Intenta varias URLs: primero local ./peliculas.json, luego la URL remota original
+    async function updateMoviesFromUrl() {
+      const urls = [
+        './peliculas.json',
+        'https://yagopc.github.io/Cine/peliculas.json'
+      ];
+      showNotification('Actualizando películas...', 'info', true);
+
+      // Limpieza previa (se respeta comportamiento existente)
+      movies = [];
+      localStorage.removeItem('peliculas');
+      currentPlayingMovie = null;
+      videoPlayer.src = '';
+      updateMoviesCount();
       renderMovies();
+
+      let loadedMovies = null;
+      for (const url of urls) {
+        try{
+          const res = await fetch(url, { cache:'no-store' });
+          if (!res.ok) throw new Error(`No se pudo cargar: ${url}`);
+          const json = await res.json();
+          if (Array.isArray(json)) { loadedMovies = json; break; }
+        }catch(_e){ /* probar siguiente */ }
+      }
+
+      if (!loadedMovies){ showNotification('Error al cargar las películas', 'error'); renderMovies(); return; }
+
+      const valid = loadedMovies.every(m => m.title && m.url);
+      if (!valid){ showNotification('El archivo no tiene el formato correcto', 'error'); renderMovies(); return; }
+
+      const processed = loadedMovies.map(m=>{
+        if (!m.addedAt) m.addedAt = new Date().toISOString();
+        if (!m.platform) m.platform = detectPlatform(m.url);
+        if (!m.genre || !GENRES.includes(m.genre)) m.genre = 'Aventura';
+        m.embedUrl = convertToEmbedUrl(m.url);
+        return m;
+      });
+
+      movies = processed;
+      saveMoviesToStorage(movies);
+      renderMovies();
+      showNotification(`Se actualizaron ${movies.length} películas correctamente`);
     }
 
+    /* =========================
+       Pantalla completa (TV)
+       ========================= */
+    async function enterFullscreen(){
+      const el = playerContainer;
+      try{
+        if (document.fullscreenElement) return;
+        if (el.requestFullscreen) await el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+        else if (el.msRequestFullscreen) await el.msRequestFullscreen();
+      }catch(e){ console.log('Pantalla completa no permitida:', e); }
+    }
+    async function exitFullscreen(){
+      try{
+        if (!document.fullscreenElement) return;
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) await document.msExitFullscreen();
+      }catch(e){/* noop */}
+    }
+
+    /* =========================
+       Controles Mando/Teclado
+       ========================= */
     function focusElement(el){
       if (!el) return;
       try{ el.focus({preventScroll:true}); }catch{}
@@ -380,110 +610,132 @@
       if (!el) return;
       el.scrollIntoView?.({ block:'nearest', inline:'nearest' });
     }
+    function firstListItem(){
+      return document.querySelector('.movie-item');
+    }
+    function listItems(){
+      return Array.from(document.querySelectorAll('.movie-item'));
+    }
+
+    function moveFocusInButtons(dir){
+      const btns = topButtons();
+      if (!btns.length) return;
+      currentButtonIndex = (currentButtonIndex + (dir>0?1:-1) + btns.length) % btns.length;
+      focusElement(btns[currentButtonIndex]);
+    }
+    function moveFocusInList(step){
+      const items = listItems();
+      if (!items.length) return;
+      currentListIndex = Math.min(Math.max(currentListIndex + step, 0), items.length - 1);
+      focusElement(items[currentListIndex]);
+    }
+
     function trapFocus(modalEl){
+      // coloca foco en primer control del modal para TV
       const tabbables = modalEl.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
       if (tabbables.length) focusElement(tabbables[0]);
     }
 
-    async function enterFullscreen(){
-      const el = playerContainer;
-      try{
-        if (document.fullscreenElement) return;
-        if (el.requestFullscreen) await el.requestFullscreen();
-        else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-        else if (el.msRequestFullscreen) await el.msRequestFullscreen();
-      }catch(e){}
-    }
+    // Eventos globales para mando
+    document.addEventListener('keydown', (e)=>{
+      // Ignorar si estamos escribiendo en un input/textarea/select (excepto flechas para navegar dentro)
+      const tag = document.activeElement?.tagName;
+      const typing = ['INPUT','TEXTAREA','SELECT'].includes(tag);
+      const inModal = addMovieModal.style.display === 'block';
+      if (!isTVKey(e) && !inModal) return;
 
-    // =============== CARGA AUTOMÁTICA DESDE URL EXTERNA ===============
-    async function autoLoadMoviesFromUrl() {
-      // 1. No cargar si ya hay películas en localStorage
-      if (localStorage.getItem('peliculas')) {
-        movies = JSON.parse(localStorage.getItem('peliculas'));
-        movies.forEach(m=>{
-          if (!m.embedUrl) m.embedUrl = convertToEmbedUrl(m.url);
-          if (!m.platform) m.platform = detectPlatform(m.url);
-          if (!m.genre || !GENRES.includes(m.genre)) m.genre = 'Aventura';
-        });
-        saveMoviesToStorage(movies);
-        renderMovies();
-        return;
+      // Back (461) o Escape para cerrar modales / salir de pantalla completa
+      if (e.keyCode === 461 || e.key === 'Escape'){
+        if (inModal){
+          addMovieModal.style.display = 'none';
+          currentFocusArea = 'buttons';
+          focusElement(topButtons()[0]);
+        }else if (document.fullscreenElement){
+          exitFullscreen();
+        }
+        e.preventDefault(); return;
       }
-      // 2. Carga remota
-      const urls = [
-        './peliculas.json',
-        'https://yagopc.github.io/Cine/peliculas.json'
-      ];
-      showNotification('Cargando películas...', 'info', true);
-      let loadedMovies = null;
-      for (const url of urls) {
-        try{
-          const res = await fetch(url, { cache:'no-store' });
-          if (!res.ok) continue;
-          const json = await res.json();
-          if (Array.isArray(json)) { loadedMovies = json; break; }
-        } catch(_e){}
-      }
-      if (!loadedMovies) {
-        showNotification('No se pudieron cargar las películas', 'error');
-        renderMovies();
-        return;
-      }
-      loadedMovies.forEach(m=>{
-        if (!m.embedUrl) m.embedUrl = convertToEmbedUrl(m.url);
-        if (!m.platform) m.platform = detectPlatform(m.url);
-        if (!m.genre || !GENRES.includes(m.genre)) m.genre = 'Aventura';
-      });
-      movies = loadedMovies;
-      saveMoviesToStorage(movies);
-      renderMovies();
-      showNotification(`Se cargaron ${movies.length} películas`);
-    }
 
-    // =============== BOTÓN ACTUALIZAR ===============
-    async function updateMoviesFromUrl() {
-      const urls = [
-        './peliculas.json',
-        'https://yagopc.github.io/Cine/peliculas.json'
-      ];
-      showNotification('Actualizando películas...', 'info', true);
-      movies = [];
-      localStorage.removeItem('peliculas');
-      currentPlayingMovie = null;
-      videoPlayer.src = '';
-      renderMovies();
-      let loadedMovies = null;
-      for (const url of urls) {
-        try{
-          const res = await fetch(url, { cache:'no-store' });
-          if (!res.ok) continue;
-          const json = await res.json();
-          if (Array.isArray(json)) { loadedMovies = json; break; }
-        }catch(_e){}
+      switch(e.key){
+        case 'ArrowRight':
+          if (currentFocusArea === 'buttons'){ moveFocusInButtons(+1); e.preventDefault(); }
+          else if (currentFocusArea === 'list'){ /* sin cambio horizontal */ }
+          else if (currentFocusArea === 'genre'){ /* moverse entre botones de género lo gestiona el navegador */ }
+          break;
+        case 'ArrowLeft':
+          if (currentFocusArea === 'buttons'){ moveFocusInButtons(-1); e.preventDefault(); }
+          break;
+        case 'ArrowDown':
+          if (currentFocusArea === 'buttons' || currentFocusArea === 'search' || currentFocusArea === 'genre'){
+            currentFocusArea = 'list';
+            if (firstListItem()) { currentListIndex = 0; focusElement(firstListItem()); }
+            e.preventDefault();
+          } else if (currentFocusArea === 'list'){ moveFocusInList(+1); e.preventDefault(); }
+          break;
+        case 'ArrowUp':
+          if (currentFocusArea === 'list'){
+            if (currentListIndex === 0){ currentFocusArea = 'buttons'; focusElement(topButtons()[currentButtonIndex] || topButtons()[0]); }
+            else moveFocusInList(-1);
+            e.preventDefault();
+          }
+          break;
+        case ' ':
+        case 'Enter': {
+          const el = document.activeElement;
+          if (!el) break;
+          // Enter "click"
+          if (el.classList.contains('movie-item')) el.click();
+          else if (el.hasAttribute('data-action')) el.click();
+          else if (el.tagName === 'BUTTON') el.click();
+          e.preventDefault();
+        } break;
       }
-      if (!loadedMovies){ showNotification('Error al cargar las películas', 'error'); renderMovies(); return; }
-      loadedMovies.forEach(m=>{
-        if (!m.embedUrl) m.embedUrl = convertToEmbedUrl(m.url);
-        if (!m.platform) m.platform = detectPlatform(m.url);
-        if (!m.genre || !GENRES.includes(m.genre)) m.genre = 'Aventura';
-      });
-      movies = loadedMovies;
-      saveMoviesToStorage(movies);
-      renderMovies();
-      showNotification(`Se actualizaron ${movies.length} películas correctamente`);
-    }
+    });
 
-    // =============== EVENTOS UI ===============
+    /* =========================
+       Eventos UI
+       ========================= */
+    addMovieBtn.addEventListener('click', ()=>{
+      isEditMode = false; editMovieIndex = null;
+      movieForm.reset();
+      fillGenreSelect();
+      modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Añadir Nueva Película';
+      movieFormSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar';
+      addMovieModal.style.display = 'block';
+      currentFocusArea = 'modal';
+      trapFocus(addMovieModal);
+    });
     updateMoviesBtn.addEventListener('click', updateMoviesFromUrl);
 
-    closeButtons.forEach(btn=> btn.addEventListener('click', function(){ this.closest('.modal').style.display = 'none'; }));
+    closeButtons.forEach(btn=> btn.addEventListener('click', function(){ this.closest('.modal').style.display = 'none'; currentFocusArea='buttons'; focusElement(topButtons()[0]); }));
+    window.addEventListener('click', (e)=>{ if (e.target.classList.contains('modal')){ e.target.style.display='none'; currentFocusArea='buttons'; focusElement(topButtons()[0]); } });
+
+    searchInput.addEventListener('input', function(){ currentSearch = this.value.toLowerCase(); renderMovies(); });
+    // Al enfocar buscador con mando
+    searchInput.addEventListener('focus', ()=> currentFocusArea='search');
+
+    genreFilterBtn.addEventListener('click', (e)=>{ e.stopPropagation(); genreButtons.classList.toggle('show'); currentFocusArea='genre'; });
+    document.addEventListener('click', (e)=>{ if (!genreFilterBtn.contains(e.target) && !genreButtons.contains(e.target)) genreButtons.classList.remove('show'); });
+    genreButtons.addEventListener('click', function(e){
+      if (e.target.classList.contains('genre-option')){
+        getGenreOptions().forEach(b=>b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentGenreFilter = e.target.dataset.genre;
+        renderMovies();
+        genreButtons.classList.remove('show');
+        currentFocusArea = 'buttons';
+        focusElement(topButtons()[0]);
+      }
+    });
 
     movieForm.addEventListener('submit', function(e){
       e.preventDefault();
       const title = document.getElementById('movieTitle').value.trim();
       const url = document.getElementById('movieUrl').value.trim();
       const genre = document.getElementById('movieGenre').value;
+
       if (!genre){ showNotification('Por favor, selecciona un género','error'); return; }
+
       if (isEditMode && editMovieIndex !== null){
         const movie = movies[editMovieIndex];
         if (url !== movie.url && movies.some((m,i)=> i!==editMovieIndex && m.url===url)){
@@ -506,21 +758,26 @@
           platform: detectPlatform(url),
           genre
         };
-        movies.push(movie);
-        saveMoviesToStorage(movies);
-        renderMovies();
+        addMovie(movie);
         showNotification('Película añadida correctamente');
       }
       movieForm.reset();
       addMovieModal.style.display = 'none';
       isEditMode = false; editMovieIndex = null;
+      currentFocusArea='buttons'; focusElement(topButtons()[0]);
     });
 
-    // =============== INICIALIZACIÓN ===============
+    /* =========================
+       Inicio automático
+       ========================= */
     function initApp(){
-      fillGenreSelect();
-      autoLoadMoviesFromUrl();
+      movies = loadMoviesFromStorage();
+      fillGenreButtons();
+      renderMovies();
+      // Carga automática de JSON al iniciar (manteniendo el comportamiento)
+      updateMoviesFromUrl();
     }
+
     initApp();
   </script>
 </body>
