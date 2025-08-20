@@ -284,12 +284,19 @@
             }
             showPlaylist(videos);
             
-            // Nueva línea: actualizar automáticamente al iniciar
-            updateFromRemoteJson();
+            // MODIFICACIÓN: Verificar si hay videos y si no, cargar automáticamente
+            if (videos.length === 0 && !localStorage.getItem('updating')) {
+                localStorage.setItem('updating', 'true');
+                updateFromRemoteJson();
+            } else {
+                localStorage.removeItem('updating');
+            }
         });
+        
         function saveList() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(videos));
         }
+        
 
         // Chromecast
         let castInitialized = false;
@@ -442,16 +449,20 @@
                 saveList();
                 showPlaylist(videos);
                 console.log("Lista actualizada correctamente desde el archivo remoto.");
+                localStorage.removeItem('updating');
             } catch (e) {
                 console.error("Error actualizando la lista: " + e.message);
-                // No mostrar alerta para que no sea intrusivo en carga automática
+                localStorage.removeItem('updating');
             }
             updateBtn.disabled = false;
             updateBtn.textContent = "Actualizar lista";
         }
 
+        // [El resto del código JavaScript permanece igual]
+    
+
         // Modificar el evento click del botón para usar la nueva función
-        updateBtn.addEventListener('click', updateFromRemoteJson);
+    
 
         function showPlaylist(videos) {
             playlistDiv.innerHTML = '';
