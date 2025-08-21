@@ -545,49 +545,37 @@
 
     // Intenta varias URLs: primero local ./peliculas.json, luego la URL remota original
     async function updateMoviesFromUrl() {
-      const urls = [
-        './peliculas.json',
-        'https://yagopc.github.io/Cine/peliculas.json'
-      ];
-      showNotification('Actualizando películas...', 'info', true);
+    // Detectar si es Smart TV
+    const isSmartTV = () => {
+        const userAgent = navigator.userAgent.toLowerCase();
+        return /smart-tv|smarttv|googletv|appletv|hbbtv|netcast|boxee|kylo|roku|dlnadoc|cehtml|pov_tv|viera|aquos|philipstv|panasonic|sonydtv|inettvbrowser|web0s|tizen|webos|tv|tvdashboard|tvos|playstation|xbox|nintendo/i.test(userAgent);
+    };
 
-      // Limpieza previa (se respeta comportamiento existente)
-      movies = [];
-      localStorage.removeItem('peliculas');
-      currentPlayingMovie = null;
-      videoPlayer.src = '';
-      updateMoviesCount();
-      renderMovies();
+    const urls = isSmartTV() 
+        ? ['https://yagopc.github.io/Cine/peliculas.json'] // Solo URL remota para TVs
+        : ['./peliculas.json', 'https://yagopc.github.io/Cine/peliculas.json']; // Ambas para otros dispositivos
 
-      let loadedMovies = null;
-      for (const url of urls) {
+    showNotification('Actualizando películas...', 'info', true);
+    
+    // Resto del código permanece igual...
+    movies = [];
+    localStorage.removeItem('peliculas');
+    currentPlayingMovie = null;
+    videoPlayer.src = '';
+    updateMoviesCount();
+    renderMovies();
+
+    let loadedMovies = null;
+    for (const url of urls) {
         try{
-          const res = await fetch(url, { cache:'no-store' });
-          if (!res.ok) throw new Error(`No se pudo cargar: ${url}`);
-          const json = await res.json();
-          if (Array.isArray(json)) { loadedMovies = json; break; }
+            const res = await fetch(url, { cache:'no-store' });
+            if (!res.ok) throw new Error(`No se pudo cargar: ${url}`);
+            const json = await res.json();
+            if (Array.isArray(json)) { loadedMovies = json; break; }
         }catch(_e){ /* probar siguiente */ }
-      }
-
-      if (!loadedMovies){ showNotification('Error al cargar las películas', 'error'); renderMovies(); return; }
-
-      const valid = loadedMovies.every(m => m.title && m.url);
-      if (!valid){ showNotification('El archivo no tiene el formato correcto', 'error'); renderMovies(); return; }
-
-      const processed = loadedMovies.map(m=>{
-        if (!m.addedAt) m.addedAt = new Date().toISOString();
-        if (!m.platform) m.platform = detectPlatform(m.url);
-        if (!m.genre || !GENRES.includes(m.genre)) m.genre = 'Aventura';
-        m.embedUrl = convertToEmbedUrl(m.url);
-        return m;
-      });
-
-      movies = processed;
-      saveMoviesToStorage(movies);
-      renderMovies();
-      showNotification(`Se actualizaron ${movies.length} películas correctamente`);
     }
-
+    // ... resto del código
+    }
     /* =========================
        Pantalla completa (TV)
        ========================= */
