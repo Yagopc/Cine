@@ -783,13 +783,18 @@
     /* =========================
        Inicio automático
        ========================= */
-    function initApp(){
-      movies = loadMoviesFromStorage();
-      fillGenreButtons();
-      renderMovies();
-      // Carga automática de JSON al iniciar (manteniendo el comportamiento)
-      updateMoviesFromUrl();
+function initApp(){
+    movies = loadMoviesFromStorage();
+    fillGenreButtons();
+    renderMovies();
+    
+    // Solo cargar automáticamente si no hay películas
+    if (movies.length === 0) {
+        setTimeout(() => {
+            updateMoviesFromUrl();
+        }, 1000); // Pequeño delay para la TV
     }
+}
 
     initApp();
   </script>
