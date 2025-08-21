@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor de Películas - Smart TV</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --accent-color: #ff9800;
+            --dark-bg: #121212;
+            --darker-bg: #0a0a0a;
+            --light-bg: #1e1e1e;
+            --text-color: #f5f5f5;
+            --text-secondary: #aaaaaa;
+            --focus-color: #ffffff;
+            --selected-color: #4CAF50;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-size: 1.5rem; /* Larger font for TV readability */
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 2vh;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2vh;
+            padding-bottom: 1vh;
+            border-bottom: 1px solid var(--text-secondary);
+        }
+        .player-container {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background-color: #000;
+            margin-bottom: 2vh;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        .player-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .buttons {
+            display: flex;
+            gap: 1vw;
+            margin-bottom: 2vh;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            padding: 1.5vh 2vw;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+            min-width: 15vw;
+            text-align: center;
+            justify-content: center;
+        }
+        button:focus {
+            outline: 3px solid var(--focus-color);
+            background-color: var(--selected-color);
+        }
+        button.secondary {
+            background-color: var(--secondary-color);
+        }
+        button.update {
+            background-color: var(--accent-color);
+        }
+        .genre-filter-container {
+            margin-bottom: 2vh;
+            text-align: center;
+        }
+        .genre-main {
+            border-radius: 8px;
+        }
+        .genre-buttons {
+            display: none;
+            flex-wrap: wrap;
+            gap: 1vw;
+            justify-content: center;
+            margin-top: 1vh;
+            transition: all 0.3s ease;
+        }
+        .genre-buttons.show {
+            display: flex;
+        }
+        .genre-option {
+            background-color: var(--darker-bg);
+            border: 1px solid var(--text-secondary);
+            border-radius: 8px;
+            color: var(--text-color);
+            min-width: 12vw;
+            padding: 1vh 1vw;
+            font-size: 1.3rem;
+        }
+        .genre-option:focus,
+        .genre-option.active {
+            background-color: var(--primary-color);
+            color: white;
+            outline: 3px solid var(--focus-color);
+        }
+        .search-container {
+            margin-bottom: 2vh;
+            width: 100%;
+            max-width: 50vw;
+            margin: 0 auto 2vh;
+        }
+        .search-container input {
+            width: 100%;
+            padding: 1.5vh;
+            border-radius: 25px;
+            border: none;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            font-size: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .search-container input:focus {
+            outline: 3px solid var(--primary-color);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            overflow: auto;
+        }
+        .modal-content {
+            background-color: var(--light-bg);
+            margin: 10vh auto;
+            padding: 2vh;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 60vw;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .close {
+            color: var(--text-secondary);
+            position: absolute;
+            right: 2vw;
+            top: 1vh;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+        .close:focus {
+            color: var(--text-color);
+            outline: 3px solid var(--focus-color);
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 1.5vh;
+            margin: 1vh 0;
+            border: 1px solid var(--text-secondary);
+            border-radius: 8px;
+            background-color: var(--darker-bg);
+            color: var(--text-color);
+            font-size: 1.5rem;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: 3px solid var(--primary-color);
+        }
+        .movie-list-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 2vh;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin-top: 2vh;
+        }
+        .movie-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2vh;
+            padding-bottom: 1vh;
+            border-bottom: 1px solid var(--text-secondary);
+        }
+        .movie-list-header h3 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+        }
+        .movie-list {
+            max-height: 40vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            flex: 1;
+        }
+        .movie-list::-webkit-scrollbar {
+            width: 1.5vw;
+        }
+        .movie-list::-webkit-scrollbar-track {
+            background: var(--darker-bg);
+            border-radius: 8px;
+        }
+        .movie-list::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 8px;
+        }
+        .movie-item {
+            padding: 1.5vh 2vw;
+            border-bottom: 1px solid var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.4rem;
+        }
+        .movie-item:focus,
+        .movie-item.selected {
+            background-color: var(--selected-color);
+            color: white;
+            outline: 3px solid var(--focus-color);
+        }
+        .movie-item .title {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 1vw;
+        }
+        .movie-item .genre {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-left: 1vw;
+            padding: 0.5vh 1vw;
+            background-color: var(--darker-bg);
+            border-radius: 12px;
+        }
+        .movie-item .actions {
+            display: flex;
+            gap: 1vw;
+        }
+        .movie-item .actions button {
+            font-size: 1.3rem;
+            padding: 1vh;
+            border-radius: 50%;
+            min-width: unset;
+        }
+        .no-movies {
+            padding: 3vh;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+        }
+        .notification {
+            position: fixed;
+            bottom: 2vh;
+            right: 2vw;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5vh 2vw;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1vw;
+        }
+        .notification.show {
+            opacity: 1;
+        }
+        .loading {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .movies-count-container {
+            text-align: center;
+            margin-bottom: 1vh;
+            color: var(--text-secondary);
+            font-size: 1.4rem;
+        }
+        .platform-info {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-top: -0.8vh;
+            margin-bottom: 1vh;
+        }
+        @media (max-width: 768px) {
+            body {
+                font-size: 1.2rem;
+            }
+            button {
+                font-size: 1.2rem;
+                padding: 1vh 1.5vw;
+                min-width: 20vw;
+            }
+            .movie-item {
+                font-size: 1.2rem;
+            }
+            .modal-content {
+                width: 90%;
+                padding: 1.5vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Reproductor de Películas</h1>
+        </div>
+        <div class="buttons">
+            <button id="addMovieBtn"><i class="fas fa-plus"></i> Añadir</button>
+            <button id="saveMoviesBtn" class="secondary"><i class="fas fa-save"></i> Guardar</button>
+            <button id="loadMoviesBtn" class="secondary"><i class="fas fa-folder-open"></i> Cargar</button>
+            <button id="updateMoviesBtn" class="update"><i class="fas fa-sync-alt"></i> Actualizar</button>
+            <button id="openOriginalBtn" class="secondary"><i class="fas fa-external-link-alt"></i> Original</button>
+            <button id="tokyVideoBtn" class="secondary"><i class="fas fa-video"></i> TokyVideo</button>
+            <button id="copyUrlBtn" class="secondary"><i class="fas fa-copy"></i> Copiar URL</button>
+        </div>
+        <div class="genre-filter-container">
+            <button id="genreFilterBtn" class="genre-main"><i class="fas fa-filter"></i> Género</button>
+            <div class="genre-buttons" id="genreButtons"></div>
+        </div>
+        <div class="player-container">
+            <iframe id="videoPlayer" src="" allowfullscreen allow="autoplay"></iframe>
+        </div>
+        <div class="movies-count-container">
+            <span id="totalMoviesCount">0 películas en total</span> |
+            <span id="filteredMoviesCount">0 coincidencias</span>
+        </div>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Buscar películas...">
+        </div>
+        <div class="movie-list-container">
+            <div class="movie-list-header">
+                <h3><i class="fas fa-list"></i> Lista de Películas</h3>
+            </div>
+            <div class="movie-list" id="moviesList"></div>
+        </div>
+    </div>
+    <div id="addMovieModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle"><i class="fas fa-plus-circle"></i> Añadir Película</h2>
+            <form id="movieForm" autocomplete="off">
+                <label for="movieTitle">Título:</label>
+                <input type="text" id="movieTitle" required>
+                <label for="movieUrl">URL del vídeo:</label>
+                <input type="text" id="movieUrl" placeholder="https://youtube.com/..." required>
+                <div class="platform-info">Soportado: YouTube, Dailymotion, OK.ru</div>
+                <label for="movieGenre">Género:</label>
+                <select id="movieGenre" required></select>
+                <button type="submit" id="movieFormSubmitBtn"><i class="fas fa-save"></i> Guardar</button>
+            </form>
+        </div>
+    </div>
+    <div id="loadFileModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-folder-open"></i> Cargar Películas</h2>
+            <div class="file-input-container">
+                <input type="file" id="fileInput" accept=".json">
+            </div>
+            <button id="confirmLoadBtn"><i class="fas fa-check"></i> Cargar</button>
+        </div>
+    </div>
+    <div id="notification" class="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText">Operación completada</span>
+    </div>
+    <script>
+        const GENRES = [
+            "Romanos", "Aventura", "Drama", "Ciencia ficción", "Policíaca",
+            "Western", "Suspense", "Fantasía", "Comedia", "Terror"
+        ];
+        const tokyVideoBtn = document.getElementById('tokyVideoBtn');
+        const addMovieBtn = document.getElementById('addMovieBtn');
+        const saveMoviesBtn = document.getElementById('saveMoviesBtn');
+        const copyUrlBtn = document.getElementById('copyUrlBtn');
+        const loadMoviesBtn = document.getElementById('loadMoviesBtn');
+        const updateMoviesBtn = document.getElementById('updateMoviesBtn');
+        const openOriginalBtn = document.getElementById('openOriginalBtn');
+        const addMovieModal = document.getElementById('addMovieModal');
+        const loadFileModal = document.getElementById('loadFileModal');
+        const closeButtons = document.querySelectorAll('.close');
+        const movieForm = document.getElementById('movieForm');
+        const moviesList = document.getElementById('moviesList');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const fileInput = document.getElementById('fileInput');
+        const confirmLoadBtn = document.getElementById('confirmLoadBtn');
+        const searchInput = document.getElementById('searchInput');
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notificationText');
+        const totalMoviesCount = document.getElementById('totalMoviesCount');
+        const filteredMoviesCount = document.getElementById('filteredMoviesCount');
+        const genreFilterBtn = document.getElementById('genreFilterBtn');
+        const genreButtons = document.getElementById('genreButtons');
+        const movieGenreSelect = document.getElementById('movieGenre');
+        const modalTitle = document.getElementById('modalTitle');
+        const movieFormSubmitBtn = document.getElementById('movieFormSubmitBtn');
+        let movies = [];
+        let currentPlayingMovie = null;
+        let currentSearch = '';
+        let currentGenreFilter = 'all';
+        let isEditMode = false;
+        let editMovieIndex = null;
+        let focusedElement = null;
+
+        function fillGenreSelect() {
+            movieGenreSelect.innerHTML = `<option value="">Selecciona un género</option>`;
+            GENRES.forEach(g => {
+                movieGenreSelect.innerHTML += `<option value="${g}">${g}</option>`;
+            });
+        }
+
+        function fillGenreButtons() {
+            let html = `<button class="genre-option ${currentGenreFilter === 'all' ? 'active' : ''}" data-genre="all" tabindex="0">Todos</button>`;
+            GENRES.forEach(g => {
+                html += `<button class="genre-option ${currentGenreFilter === g ? 'active' : ''}" data-genre="${g}" tabindex="0">${g}</button>`;
+            });
+            genreButtons.innerHTML = html;
+        }
+
+        function copyVideoUrl() {
+            if (!currentPlayingMovie) {
+                showNotification('No hay ninguna película reproduciéndose', 'warning');
+                return;
+            }
+            if (currentPlayingMovie.url) {
+                try {
+                    navigator.clipboard.writeText(currentPlayingMovie.url)
+                        .then(() => showNotification('URL copiada al portapapeles'))
+                        .catch(() => {
+                            const textarea = document.createElement('textarea');
+                            textarea.value = currentPlayingMovie.url;
+                            document.body.appendChild(textarea);
+                            textarea.focus();
+                            document.execCommand('copy');
+                            document.body.removeChild(textarea);
+                            showNotification('URL copiada al portapapeles');
+                        });
+                } catch (err) {
+                    showNotification('No se pudo copiar la URL', 'error');
+                }
+            } else {
+                showNotification('No se pudo encontrar la URL original', 'error');
+            }
+        }
+
+        // Remote control navigation
+        document.addEventListener('keydown', (e) => {
+            const focusableElements = Array.from(document.querySelectorAll(
+                'button, input, select, .movie-item, .close, .genre-option'
+            )).filter(el => !el.disabled && el.offsetParent !== null);
+            if (!focusableElements.length) return;
+
+            if (!focusedElement) {
+                focusedElement = focusableElements[0];
+                focusedElement.focus();
+            }
+
+            const currentIndex = focusableElements.indexOf(focusedElement);
+            let nextIndex;
+
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'ArrowLeft':
+                    nextIndex = currentIndex > 0 ? currentIndex - 1 : focusableElements.length - 1;
+                    focusedElement = focusableElements[nextIndex];
+                    focusedElement.focus();
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                case 'ArrowRight':
+                    nextIndex = currentIndex < focusableElements.length - 1 ? currentIndex + 1 : 0;
+                    focusedElement = focusableElements[nextIndex];
+                    focusedElement.focus();
+                    e.preventDefault();
+                    break;
+                case 'Enter':
+                    if (focusedElement.classList.contains('movie-item')) {
+                        focusedElement.click();
+                    } else if (focusedElement.classList.contains('genre-option')) {
+                        focusedElement.click();
+                    } else {
+                        focusedElement.click();
+                    }
+                    e.preventDefault();
+                    break;
+                case 'Backspace':
+                case 'Escape':
+                    if (addMovieModal.style.display === 'block') {
+                        addMovieModal.style.display = 'none';
+                    } else if (loadFileModal.style.display === 'block') {
+                        loadFileModal.style.display = 'none';
+                    } else if (genreButtons.classList.contains('show')) {
+                        genreButtons.classList.remove('show');
+                    }
+                    e.preventDefault();
+                    break;
+            }
+        });
+
+        // Event listeners
+        addMovieBtn.addEventListener('click', () => {
+            isEditMode = false;
+            editMovieIndex = null;
+            movieForm.reset();
+            fillGenreSelect();
+            modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Añadir Película';
+            movieFormSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar';
+            addMovieModal.style.display = 'block';
+            focusedElement = document.getElementById('movieTitle');
+            focusedElement.focus();
+        });
+
+        tokyVideoBtn.addEventListener('click', () => {
+            window.open('https://www.google.com/search?q=tokyvideo+completa+%2Bcastellano+', '_blank');
+            showNotification('Buscando en TokyVideo...');
+        });
+
+        copyUrlBtn.addEventListener('click', copyVideoUrl);
+        saveMoviesBtn.addEventListener('click', saveMoviesToFile);
+        loadMoviesBtn.addEventListener('click', () => {
+            loadFileModal.style.display = 'block';
+            focusedElement = fileInput;
+            focusedElement.focus();
+        });
+        updateMoviesBtn.addEventListener('click', updateMoviesFromUrl);
+        openOriginalBtn.addEventListener('click', openOriginalUrl);
+
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.modal').style.display = 'none';
+                focusedElement = addMovieBtn;
+                focusedElement.focus();
+            });
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+                focusedElement = addMovieBtn;
+                focusedElement.focus();
+            }
+        });
+
+        searchInput.addEventListener('input', function() {
+            currentSearch = this.value.toLowerCase();
+            renderMovies();
+        });
+
+        genreFilterBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            genreButtons.classList.toggle('show');
+            if (genreButtons.classList.contains('show')) {
+                focusedElement = genreButtons.querySelector('.genre-option');
+                focusedElement.focus();
+            }
+        });
+
+        genreButtons.addEventListener('click', function(e) {
+            if (e.target.classList.contains('genre-option')) {
+                document.querySelectorAll('.genre-option').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                currentGenreFilter = e.target.dataset.genre;
+                renderMovies();
+                genreButtons.classList.remove('show');
+                focusedElement = genreFilterBtn;
+                focusedElement.focus();
+            }
+        });
+
+        confirmLoadBtn.addEventListener('click', loadMoviesFromFile);
+
+        movieForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = document.getElementById('movieTitle').value.trim();
+            const url = document.getElementById('movieUrl').value.trim();
+            const genre = document.getElementById('movieGenre').value;
+
+            if (!genre) {
+                showNotification('Por favor, selecciona un género', 'error');
+                return;
+            }
+            if (!isValidVideoUrl(url)) {
+                showNotification('URL no válida. Usa YouTube, Dailymotion o OK.ru', 'error');
+                return;
+            }
+            if (isEditMode && editMovieIndex !== null) {
+                const movie = movies[editMovieIndex];
+                if (url !== movie.url && movies.some((m, i) => i !== editMovieIndex && m.url === url)) {
+                    showNotification('Ya existe una película con esa URL', 'warning');
+                    return;
+                }
+                movie.title = title;
+                movie.url = url;
+                movie.genre = genre;
+                movie.embedUrl = convertToEmbedUrl(url);
+                movie.platform = detectPlatform(url);
+                saveMoviesToStorage(movies);
+                renderMovies();
+                showNotification('Película editada correctamente');
+            } else {
+                const exists = movies.some(m => m.url === url);
+                if (exists) {
+                    showNotification('Esta película ya está en tu lista', 'warning');
+                    return;
+                }
+                const movie = {
+                    title: title,
+                    url: url,
+                    embedUrl: convertToEmbedUrl(url),
+                    addedAt: new Date().toISOString(),
+                    platform: detectPlatform(url),
+                    genre: genre
+                };
+                addMovie(movie);
+                showNotification('Película añadida correctamente');
+            }
+            movieForm.reset();
+            addMovieModal.style.display = 'none';
+            focusedElement = addMovieBtn;
+            focusedElement.focus();
+        });
+
+        function initApp() {
+            movies = loadMoviesFromStorage();
+            fillGenreButtons();
+            renderMovies();
+            if (movies.length === 0 && !localStorage.getItem('updating')) {
+                showNotification('Cargando películas...', 'info', true);
+                localStorage.setItem('updating', 'true');
+                updateMoviesFromUrl();
+            } else {
+                localStorage.removeItem('updating');
+            }
+            addMovieBtn.focus();
+            focusedElement = addMovieBtn;
+        }
+
+        function loadMoviesFromStorage() {
+            try {
+                const moviesFromStorage = localStorage.getItem('peliculas');
+                if (moviesFromStorage) {
+                    const parsedMovies = JSON.parse(moviesFromStorage);
+                    return parsedMovies.map(movie => {
+                        if (!movie.addedAt) movie.addedAt = new Date().toISOString();
+                        if (!movie.platform) movie.platform = detectPlatform(movie.url);
+                        if (!movie.genre || !GENRES.includes(movie.genre)) movie.genre = 'Aventura';
+                        movie.embedUrl = convertToEmbedUrl(movie.url);
+                        return movie;
+                    });
+                }
+                return [];
+            } catch (e) {
+                console.error('Error al parsear películas:', e);
+                return [];
+            }
+        }
+
+        function saveMoviesToStorage(moviesArray) {
+            moviesArray.sort((a, b) => a.title.localeCompare(b.title));
+            try {
+                localStorage.setItem('peliculas', JSON.stringify(moviesArray));
+            } catch (e) {
+                showNotification('Error al guardar: almacenamiento lleno', 'error');
+            }
+            updateMoviesCount();
+            renderMovies();
+        }
+
+        function addMovie(movie) {
+            movies.push(movie);
+            saveMoviesToStorage(movies);
+            renderMovies();
+        }
+
+        function renderMovies() {
+            moviesList.innerHTML = '';
+            let filteredMovies = [...movies];
+            if (currentSearch) {
+                filteredMovies = filteredMovies.filter(movie =>
+                    movie.title.toLowerCase().includes(currentSearch)
+                );
+            }
+            if (currentGenreFilter !== 'all') {
+                filteredMovies = filteredMovies.filter(movie =>
+                    movie.genre === currentGenreFilter
+                );
+            }
+            totalMoviesCount.textContent = `${movies.length} ${movies.length === 1 ? 'película en total' : 'películas en total'}`;
+            filteredMoviesCount.textContent = `${filteredMovies.length} ${filteredMovies.length === 1 ? 'coincidencia' : 'coincidencias'}`;
+
+            if (filteredMovies.length === 0) {
+                let noMoviesMsg;
+                if (currentSearch && currentGenreFilter !== 'all') {
+                    noMoviesMsg = 'No hay películas que coincidan con tu búsqueda y género seleccionado';
+                } else if (currentSearch) {
+                    noMoviesMsg = 'No hay películas que coincidan con tu búsqueda';
+                } else if (currentGenreFilter !== 'all') {
+                    noMoviesMsg = `No hay películas del género ${currentGenreFilter}`;
+                } else {
+                    noMoviesMsg = 'No hay películas en la lista';
+                }
+                moviesList.innerHTML = `<div class="no-movies">${noMoviesMsg}</div>`;
+            } else {
+                filteredMovies.forEach((movie, index) => {
+                    const movieElement = document.createElement('div');
+                    movieElement.className = 'movie-item';
+                    movieElement.tabIndex = 0;
+                    let platformIcon = 'fa-film';
+                    if (movie.platform === 'youtube') platformIcon = 'fa-youtube';
+                    if (movie.platform === 'dailymotion') platformIcon = 'fa-play-circle';
+                    if (movie.platform === 'ok') platformIcon = 'fa-vk';
+                    movieElement.innerHTML = `
+                        <div class="title">
+                            <i class="fab ${platformIcon}" style="margin-right: 1vw;"></i>
+                            ${movie.title}
+                            <span class="genre">${movie.genre}</span>
+                        </div>
+                        <div class="actions">
+                            <button class="edit-btn" title="Editar" data-action="edit" data-url="${movie.url}"><i class="fas fa-edit"></i></button>
+                            <button class="delete-btn" title="Eliminar" data-action="delete" data-url="${movie.url}"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    movieElement.addEventListener('click', () => {
+                        document.querySelectorAll('.movie-item').forEach(item => {
+                            item.classList.remove('selected');
+                        });
+                        movieElement.classList.add('selected');
+                        playMovie(movie);
+                        focusedElement = movieElement;
+                    });
+                    moviesList.appendChild(movieElement);
+                });
+            }
+
+            openOriginalBtn.disabled = !currentPlayingMovie;
+            copyUrlBtn.disabled = !currentPlayingMovie;
+
+            document.querySelectorAll('button[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const movieIndex = movies.findIndex(m => m.url === this.dataset.url);
+                    if (movieIndex === -1) return;
+                    const movie = movies[movieIndex];
+                    isEditMode = true;
+                    editMovieIndex = movieIndex;
+                    fillGenreSelect();
+                    document.getElementById('movieTitle').value = movie.title;
+                    document.getElementById('movieUrl').value = movie.url;
+                    document.getElementById('movieGenre').value = movie.genre;
+                    modalTitle.innerHTML = '<i class="fas fa-edit"></i> Editar Película';
+                    movieFormSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar cambios';
+                    addMovieModal.style.display = 'block';
+                    focusedElement = document.getElementById('movieTitle');
+                    focusedElement.focus();
+                });
+            });
+
+            document.querySelectorAll('button[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    deleteMovie(this.dataset.url);
+                });
+            });
+        }
+
+        function playMovie(movie) {
+            if (!movie || !movie.embedUrl) return;
+            videoPlayer.src = movie.embedUrl;
+            currentPlayingMovie = movie;
+            openOriginalBtn.disabled = false;
+            copyUrlBtn.disabled = false;
+            showNotification(`Reproduciendo: ${movie.title}`);
+            setTimeout(() => {
+                try {
+                    if (videoPlayer.requestFullscreen) {
+                        videoPlayer.requestFullscreen();
+                    } else if (videoPlayer.webkitRequestFullscreen) {
+                        videoPlayer.webkitRequestFullscreen();
+                    } else if (videoPlayer.msRequestFullscreen) {
+                        videoPlayer.msRequestFullscreen();
+                    }
+                } catch (err) {
+                    console.log('Error al intentar pantalla completa:', err);
+                }
+            }, 1000);
+        }
+
+        function openOriginalUrl() {
+            if (!currentPlayingMovie) {
+                showNotification('No hay ninguna película reproduciéndose', 'warning');
+                return;
+            }
+            if (currentPlayingMovie.url) {
+                window.open(currentPlayingMovie.url, '_blank');
+                showNotification(`Abriendo: ${currentPlayingMovie.title}`);
+            } else {
+                showNotification('No se pudo encontrar la URL original', 'error');
+            }
+        }
+
+        function deleteMovie(movieUrl) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta película?')) {
+                if (currentPlayingMovie && currentPlayingMovie.url === movieUrl) {
+                    currentPlayingMovie = null;
+                    videoPlayer.src = '';
+                    openOriginalBtn.disabled = true;
+                    copyUrlBtn.disabled = true;
+                }
+                movies = movies.filter(movie => movie.url !== movieUrl);
+                saveMoviesToStorage(movies);
+                showNotification('Película eliminada');
+                renderMovies();
+            }
+        }
+
+        function detectPlatform(url) {
+            if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+            if (url.includes('dailymotion.com') || url.includes('dai.ly')) return 'dailymotion';
+            if (url.includes('ok.ru') || url.includes('odnoklassniki.ru')) return 'ok';
+            return 'unknown';
+        }
+
+        function isValidVideoUrl(url) {
+            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+            const dailymotionRegex = /^(https?:\/\/)?(www\.)?(dailymotion\.com|dai\.ly)\/.+$/;
+            const okruRegex = /^(https?:\/\/)?(www\.)?(ok\.ru|odnoklassniki\.ru)\/.+$/;
+            return youtubeRegex.test(url) || dailymotionRegex.test(url) || okruRegex.test(url);
+        }
+
+        function convertToEmbedUrl(url) {
+            const platform = detectPlatform(url);
+            if (url.includes('embed')) return url;
+            switch (platform) {
+                case 'youtube':
+                    let videoId = '';
+                    const youtubeRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                    const match = url.match(youtubeRegExp);
+                    if (match && match[2].length === 11) {
+                        videoId = match[2];
+                    } else if (url.includes('youtu.be/')) {
+                        videoId = url.split('youtu.be/')[1].split(/[?&]/)[0];
+                    }
+                    if (videoId) {
+                        return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+                    }
+                    break;
+                case 'dailymotion':
+                    const dmRegExp = /^.+dailymotion.com\/(video|hub)\/([^_]+)[^#]*(#video=([^_&]+))?/;
+                    const dmMatch = url.match(dmRegExp);
+                    if (dmMatch) {
+                        const videoId = dmMatch[4] || dmMatch[2];
+                        return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1`;
+                    } else if (url.includes('dai.ly/')) {
+                        const videoId = url.split('dai.ly/')[1].split(/[?&]/)[0];
+                        return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1`;
+                    }
+                    break;
+                case 'ok':
+                    if (url.includes('video/')) {
+                        const parts = url.split('video/');
+                        if (parts.length > 1) {
+                            const videoId = parts[1].split('/')[0].split('?')[0];
+                            return `https://ok.ru/videoembed/${videoId}?autoplay=1`;
+                        }
+                    }
+                    break;
+            }
+            return url;
+        }
+
+        function saveMoviesToFile() {
+            if (movies.length === 0) {
+                showNotification('No hay películas para guardar', 'warning');
+                return;
+            }
+            const dataStr = JSON.stringify(movies, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            const exportFileDefaultName = 'peliculas.json';
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            document.body.appendChild(linkElement);
+            linkElement.click();
+            linkElement.remove();
+            showNotification('Películas guardadas en archivo');
+        }
+
+        function loadMoviesFromFile() {
+            const file = fileInput.files[0];
+            if (!file) {
+                showNotification('Por favor selecciona un archivo', 'warning');
+                return;
+            }
+            if (file.type !== "application/json" && !file.name.endsWith('.json')) {
+                showNotification('Por favor selecciona un archivo JSON', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const loadedMovies = JSON.parse(e.target.result);
+                    if (!Array.isArray(loadedMovies)) {
+                        throw new Error('El archivo no contiene un array válido');
+                    }
+                    const isValid = loadedMovies.every(movie =>
+                        movie.title && movie.url && movie.embedUrl
+                    );
+                    if (!isValid) throw new Error('El archivo no tiene el formato correcto');
+                    const processedMovies = loadedMovies.map(movie => {
+                        if (!movie.addedAt) movie.addedAt = new Date().toISOString();
+                        if (!movie.platform) movie.platform = detectPlatform(movie.url);
+                        if (!movie.genre || !GENRES.includes(movie.genre)) movie.genre = 'Aventura';
+                        movie.embedUrl = convertToEmbedUrl(movie.url);
+                        return movie;
+                    });
+                    movies = processedMovies;
+                    saveMoviesToStorage(movies);
+                    showNotification(`Se cargaron ${movies.length} películas correctamente`);
+                    loadFileModal.style.display = 'none';
+                    fileInput.value = '';
+                    renderMovies();
+                    focusedElement = addMovieBtn;
+                    focusedElement.focus();
+                } catch (error) {
+                    showNotification('Error al cargar el archivo: ' + error.message, 'error');
+                }
+            };
+            reader.onerror = function() {
+                showNotification('Error al leer el archivo', 'error');
+            };
+            reader.readAsText(file);
+        }
+
+        function updateMoviesFromUrl() {
+            const url = 'https://yagopc.github.io/Cine/peliculas.json';
+            showNotification('Actualizando películas...', 'info', true);
+            movies = [];
+            localStorage.removeItem('peliculas');
+            currentPlayingMovie = null;
+            videoPlayer.src = '';
+            openOriginalBtn.disabled = true;
+            copyUrlBtn.disabled = true;
+            updateMoviesCount();
+            renderMovies();
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('No se pudo cargar el archivo');
+                    return response.json();
+                })
+                .then(loadedMovies => {
+                    if (!Array.isArray(loadedMovies)) {
+                        throw new Error('El archivo no contiene un array válido');
+                    }
+                    const isValid = loadedMovies.every(movie =>
+                        movie.title && movie.url && movie.embedUrl
+                    );
+                    if (!isValid) throw new Error('El archivo no tiene el formato correcto');
+                    const processedMovies = loadedMovies.map(movie => {
+                        if (!movie.addedAt) movie.addedAt = new Date().toISOString();
+                        if (!movie.platform) movie.platform = detectPlatform(movie.url);
+                        if (!movie.genre || !GENRES.includes(movie.genre)) movie.genre = 'Aventura';
+                        movie.embedUrl = convertToEmbedUrl(movie.url);
+                        return movie;
+                    });
+                    movies = processedMovies;
+                    saveMoviesToStorage(movies);
+                    renderMovies();
+                    showNotification(`Se actualizaron ${movies.length} películas correctamente`);
+                    localStorage.removeItem('updating');
+                    focusedElement = addMovieBtn;
+                    focusedElement.focus();
+                })
+                .catch(error => {
+                    showNotification('Error al cargar las películas: ' + error.message, 'error');
+                    renderMovies();
+                    localStorage.removeItem('updating');
+                });
+        }
+
+        function showNotification(message, type = 'success', loading = false) {
+            notificationText.textContent = message;
+            if (type === 'error') {
+                notification.style.backgroundColor = '#f44336';
+            } else if (type === 'warning') {
+                notification.style.backgroundColor = '#ff9800';
+            } else if (type === 'info') {
+                notification.style.backgroundColor = '#2196F3';
+            } else {
+                notification.style.backgroundColor = '#4CAF50';
+            }
+            const icon = notification.querySelector('i');
+            if (loading) {
+                icon.className = 'loading';
+            } else {
+                if (type === 'error') {
+                    icon.className = 'fas fa-exclamation-circle';
+                } else if (type === 'warning') {
+                    icon.className = 'fas fa-exclamation-triangle';
+                } else if (type === 'info') {
+                    icon.className = 'fas fa-info-circle';
+                } else {
+                    icon.className = 'fas fa-check-circle';
+                }
+            }
+            notification.classList.add('show');
+            if (!loading) {
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        function updateMoviesCount() {
+            totalMoviesCount.textContent = `${movies.length} ${movies.length === 1 ? 'película en total' : 'películas en total'}`;
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
