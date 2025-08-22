@@ -1798,5 +1798,103 @@
     "addedAt": "2025-08-19T13:20:31Z",
     "platform": "youtube",
     "genre": "Romanos"
+  },
+  
+  {
+    "title": "ALEJANDRO MAGNO",
+    "url": "https://youtu.be/0uDIVv83KXE?si=x_t_JJJRH1G6ThdP",
+    "embedUrl": "https://www.youtube.com/embed/0uDIVv83KXE?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:52:08.456Z",
+    "platform": "youtube",
+    "genre": "Documental"
+  },
+  {
+    "title": "DESCUBRIMIENTO DE JAMES WEEP",
+    "url": "https://youtu.be/YojhZLsEfLc?si=rFRdN6hzKd7ySzfY",
+    "embedUrl": "https://www.youtube.com/embed/YojhZLsEfLc?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:49:06.344Z",
+    "platform": "youtube",
+    "genre": "Documental"
+  },
+  {
+    "title": "EL CARBONÍFERO",
+    "url": "https://youtu.be/JxHryufHyIg?si=1V-olDg5ceagN4z6",
+    "embedUrl": "https://www.youtube.com/embed/JxHryufHyIg?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:44:46.625Z",
+    "platform": "youtube",
+    "genre": "Documental"
+  },
+  {
+    "title": "EL DEVÓNICO",
+    "url": "https://youtu.be/QJ7_8WIwpDI?si=bhznypi2qdU722Qt",
+    "embedUrl": "https://www.youtube.com/embed/QJ7_8WIwpDI?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:45:19.482Z",
+    "platform": "youtube",
+    "genre": "Documental"
+  },
+  {
+    "title": "EL SILÚRICO",
+    "url": "https://youtu.be/5vxFTTMLRWM?si=coLST8SCgn4uJrWj",
+    "embedUrl": "https://www.youtube.com/embed/5vxFTTMLRWM?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:46:10.323Z",
+    "platform": "youtube",
+    "genre": "Documental"
+  },
+  {
+    "title": "ESCONDE MERCURIO",
+    "url": "https://youtu.be/xB2evIho_-o?si=YubuIk5sKEONIyCS",
+    "embedUrl": "https://www.youtube.com/embed/xB2evIho_-o?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:45:43.257Z",
+    "platform": "youtube",
+    "genre": "Documental"
+  },
+  {
+    "title": "LA ERA OLVIDADA",
+    "url": "https://youtu.be/JrQkS-LAgao?si=G-rE8fp_lbZIAXnv",
+    "embedUrl": "https://www.youtube.com/embed/JrQkS-LAgao?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:48:17.287Z",
+    "platform": "youtube",
+    "genre": "Documental"
+  },
+  {
+    "title": "LA ODISEA DE LA TIERRA",
+    "url": "https://youtu.be/Z2RX1dLX_CM?si=rIGedYHneuUjRVgh",
+    "embedUrl": "https://www.youtube.com/embed/Z2RX1dLX_CM?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:47:02.615Z",
+    "platform": "youtube",
+    "genre": "Documental"
+  },
+  {
+    "title": "LA TIERRA EN LA ÉPOCA DE PANGEA",
+    "url": "https://youtu.be/W2_0PYMpdZQ?si=Mf9EvJc5EgDu1INu",
+    "embedUrl": "https://www.youtube.com/embed/W2_0PYMpdZQ?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:47:26.579Z",
+    "platform": "youtube",
+    "genre": "Documental"
+  },
+  {
+    "title": "LA TIERRA Y LA ÉPOCA DE LOS INSECTOS",
+    "url": "https://youtu.be/-Ne0wPF8lww?si=tEMWLqDmtzdx-Zdr",
+    "embedUrl": "https://www.youtube.com/embed/-Ne0wPF8lww?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:47:54.157Z",
+    "platform": "youtube",
+    "genre": "Documental"
+  },
+  {
+    "title": "ULISES",
+    "url": "https://youtu.be/k3bSLQMHRdc?si=r2mUd7XUqlAH1b13",
+    "embedUrl": "https://www.youtube.com/embed/k3bSLQMHRdc?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:54:19.839Z",
+    "platform": "youtube",
+    "genre": "Documental"
+  },
+  {
+    "title": "VIAJE A JÚPITER",
+    "url": "https://youtu.be/zNpFm-C3wI0?si=M_M4C0M295Q1ItRH",
+    "embedUrl": "https://www.youtube.com/embed/zNpFm-C3wI0?autoplay=1&rel=0",
+    "addedAt": "2025-08-22T20:43:55.917Z",
+    "platform": "youtube",
+    "genre": "Documental"
   }
+  
 ]
