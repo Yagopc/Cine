@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reproductor de Películas - Smart TV</title>
+    <meta name="description" content="Reproductor de películas optimizado para navegadores Smart TV (Toshiba)" />
+    <style>
+        /* Colores y tipografía */
+        :root{
+            --bg:#0b0b0b;
+            --panel:#161616;
+            --muted:#9a9a9a;
+            --primary:#4CAF50;
+            --accent:#ff9800;
+            --white:#f5f5f5;
+            --selected:#3e8e3e;
+            --danger:#f44336;
+            --info:#2196F3;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%;margin:0;background:var(--bg);color:var(--white);font-family:Arial,Helvetica,sans-serif}
+        /* Contenedor principal */
+        .app{display:flex;flex-direction:column;height:100%;padding:24px;gap:20px}
+        .header{text-align:center}
+        .header h1{font-size:36px;margin:0}
+        /* Botones grandes para TV */
+        .controls{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+        .btn{
+            background:var(--primary);color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:22px;font-weight:700;
+            min-width:180px;min-height:64px;cursor:pointer;outline:none;
+            display:inline-flex;align-items:center;justify-content:center;gap:12px;
+        }
+        .btn.secondary{background:var(--panel);color:var(--white);border:2px solid var(--muted)}
+        .btn.accent{background:var(--accent)}
+        .btn:focus{box-shadow:0 0 0 4px rgba(76,175,80,0.18)}
+        /* Player: 16:9 responsive compatible con navegadores antiguos */
+        .player-wrap{width:100%;max-width:1280px;margin:0 auto;background:#000;border-radius:10px;overflow:hidden;position:relative}
+        .player-wrap .poster{
+            width:100%;padding-top:56.25%; /* 16:9 */
+            background:#000;position:relative;
+        }
+        iframe#videoPlayer{position:absolute;left:0;top:0;width:100%;height:100%;border:0;background:#000}
+        /* Buscador y selección */
+        .search-row{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap}
+        input#searchInput{min-width:320px;max-width:720px;padding:14px 18px;border-radius:28px;border:none;background:var(--panel);color:var(--white);font-size:20px;outline: none}
+        select#resolutionSelect{padding:12px 18px;border-radius:10px;background:var(--panel);color:var(--white);border:none;font-size:18px}
+        /* Lista de películas: grande, navegable */
+        .list-panel{flex:1;max-width:1280px;margin:0 auto;background:var(--panel);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+        .list-header{display:flex;justify-content:space-between;align-items:center;padding:6px 12px}
+        .list-header h3{margin:0;font-size:20px;color:var(--primary)}
+        .counts{color:var(--muted);font-size:18px}
+        .movies-list{overflow-y:auto;padding:6px 4px;border-radius:8px;max-height:40vh}
+        .movie-item{
+            display:flex;align-items:center;justify-content:space-between;padding:14px;border-radius:8px;margin:6px 4px;background:transparent;cursor:pointer;font-size:20px;
+            gap:12px;border:2px solid transparent;
+        }
+        .movie-item .left{display:flex;align-items:center;gap:12px;min-width:0}
+        .movie-item .title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .movie-item .genre{background:#0f0f0f;padding:6px 10px;border-radius:8px;color:var(--muted);font-size:16px}
+        .movie-item .actions{display:flex;gap:10px;align-items:center}
+        .movie-item button.action{
+            min-width:56px;min-height:56px;border-radius:50%;border:none;background:rgba(255,255,255,0.06);color:var(--white);font-size:18px;cursor:pointer;
+        }
+        .movie-item:focus, .movie-item.selected{outline:none;border-color:var(--selected);background:linear-gradient(90deg, rgba(76,175,80,0.12), transparent)}
+        .no-movies{padding:32px;text-align:center;color:var(--muted);font-size:20px}
+        /* Notificación simple */
+        .notification{position:fixed;right:20px;top:20px;background:var(--primary);color:#fff;padding:12px 16px;border-radius:8px;display:none;z-index:999}
+        .notification.show{display:block}
+        /* Ajustes para pantallas pequeñas */
+        @media (max-width:720px){
+            .header h1{font-size:24px}
+            .btn{min-width:140px;padding:12px 16px;font-size:18px}
+            input#searchInput{min-width:200px}
+        }
+    </style>
+</head>
+<body>
+    <div class="app" role="application" aria-label="Reproductor de películas">
+        <div class="header">
+            <h1>Reproductor de Películas</h1>
+        </div>
+
+        <div class="controls" role="toolbar" aria-label="Controles principales">
+            <button id="updateMoviesBtn" class="btn accent" aria-label="Actualizar películas" tabindex="0">⟳ Actualizar</button>
+            <button id="genreFilterBtn" class="btn secondary" aria-label="Filtrar por género" tabindex="0">☰ Género</button>
+            <select id="resolutionSelect" aria-label="Seleccionar resolución" title="Resolución" tabindex="0">
+                <option value="480">480p (recomendado)</option>
+                <option value="720">720p</option>
+                <option value="1080">1080p</option>
+                <option value="max">Máxima</option>
+            </select>
+        </div>
+
+        <div id="genreButtons" style="display:none;justify-content:center;gap:12px;flex-wrap:wrap;max-width:1280px;margin:0 auto;"></div>
+
+        <div class="player-wrap" aria-live="polite">
+            <div class="poster">
+                <iframe id="videoPlayer" src="" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen title="Reproductor de video"></iframe>
+            </div>
+        </div>
+
+        <div class="search-row" style="justify-content:center">
+            <input id="searchInput" type="search" placeholder="Buscar películas..." aria-label="Buscar películas" tabindex="0" />
+        </div>
+
+        <div class="list-panel" role="region" aria-label="Lista de películas">
+            <div class="list-header">
+                <h3>Lista de Películas</h3>
+                <div class="counts"><span id="totalMoviesCount">0 películas</span> | <span id="filteredMoviesCount">0 coincidencias</span></div>
+            </div>
+            <div class="movies-list" id="moviesList" tabindex="0" aria-label="Lista desplazable de películas">
+                <div class="no-movies" id="noMoviesMsg">Cargando...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification" role="status" aria-live="polite"></div>
+
+    <script>
+        (function(){
+            // Constantes y elementos
+            const GENRES = ["Romanos","Aventura","Drama","Ciencia ficción","Policíaca","Western","Suspense","Fantasía","Comedia","Terror"];
+            const updateMoviesBtn = document.getElementById('updateMoviesBtn');
+            const moviesListEl = document.getElementById('moviesList');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const searchInput = document.getElementById('searchInput');
+            const notification = document.getElementById('notification');
+            const totalMoviesCount = document.getElementById('totalMoviesCount');
+            const filteredMoviesCount = document.getElementById('filteredMoviesCount');
+            const genreFilterBtn = document.getElementById('genreFilterBtn');
+            const genreButtons = document.getElementById('genreButtons');
+            const resolutionSelect = document.getElementById('resolutionSelect');
+
+            let movies = [];
+            let currentPlayingIndex = -1;
+            let currentSearch = '';
+            let currentGenreFilter = 'all';
+            let currentResolution = '480';
+            let focusedIndex = 0; // para navegación con remote
+
+            // Inicialización
+            document.addEventListener('DOMContentLoaded', initApp);
+
+            function initApp(){
+                // Rellenar botones de género
+                fillGenreButtons();
+                // Cargar desde localStorage si existe
+                movies = loadMoviesFromStorage();
+                renderMovies();
+                // Si no hay películas, intentar actualizar desde URL
+                if (movies.length === 0 && !localStorage.getItem('updating')){
+                    localStorage.setItem('updating','true');
+                    updateMoviesFromUrl();
+                } else {
+                    localStorage.removeItem('updating');
+                }
+                attachEventHandlers();
+            }
+
+            function attachEventHandlers(){
+                searchInput.addEventListener('input', e=>{
+                    currentSearch = e.target.value.trim().toLowerCase();
+                    renderMovies();
+                });
+
+                genreFilterBtn.addEventListener('click', ()=>{
+                    genreButtons.style.display = genreButtons.style.display === 'flex' ? 'none' : 'flex';
+                });
+
+                genreButtons.addEventListener('click', e=>{
+                    const btn = e.target.closest('button[data-genre]');
+                    if (!btn) return;
+                    currentGenreFilter = btn.dataset.genre;
+                    Array.from(genreButtons.querySelectorAll('button')).forEach(b=>b.style.outline='none');
+                    btn.style.outline = '3px solid rgba(255,255,255,0.08)';
+                    genreButtons.style.display = 'none';
+                    renderMovies();
+                });
+
+                resolutionSelect.addEventListener('change', ()=>{
+                    currentResolution = resolutionSelect.value;
+                    if (currentPlayingIndex >= 0 && movies[currentPlayingIndex]) {
+                        playMovieAtIndex(currentPlayingIndex, { attemptUnmute: true });
+                    }
+                });
+
+                updateMoviesBtn.addEventListener('click', updateMoviesFromUrl);
+
+                // Navegación por teclado (control remoto)
+                document.addEventListener('keydown', handleKeyNavigation);
+
+                // Click fuera para cerrar género
+                document.addEventListener('click', e=>{
+                    if (!genreFilterBtn.contains(e.target) && !genreButtons.contains(e.target)){
+                        genreButtons.style.display = 'none';
+                    }
+                });
+            }
+
+            function fillGenreButtons(){
+                genreButtons.style.display='none';
+                genreButtons.style.justifyContent='center';
+                genreButtons.style.gap='12px';
+                let html = '<button class="btn secondary" data-genre="all" tabindex="0">Todos</button>';
+                GENRES.forEach(g => {
+                    html += `<button class="btn secondary" data-genre="${escapeHtml(g)}" tabindex="0">${escapeHtml(g)}</button>`;
+                });
+                genreButtons.innerHTML = html;
+            }
+
+            function loadMoviesFromStorage(){
+                try{
+                    const raw = localStorage.getItem('peliculas');
+                    if (!raw) return [];
+                    const parsed = JSON.parse(raw);
+                    return parsed.map(m=>{
+                        // asegurar campos mínimos y embedUrl
+                        m.addedAt = m.addedAt || new Date().toISOString();
+                        m.platform = m.platform || detectPlatform(m.url || '');
+                        m.genre = (m.genre && GENRES.includes(m.genre)) ? m.genre : 'Aventura';
+                        m.embedUrl = m.embedUrl || convertToEmbedUrl(m.url || '');
+                        return m;
+                    });
+                }catch(err){
+                    console.warn('Error leyendo peliculas desde localStorage', err);
+                    return [];
+                }
+            }
+
+            function saveMoviesToStorage(arr){
+                try{
+                    arr.sort((a,b)=> (a.title || '').localeCompare(b.title || ''));
+                    localStorage.setItem('peliculas', JSON.stringify(arr));
+                }catch(err){
+                    showNotification('Error guardando películas: almacenamiento lleno', 'error');
+                }
+            }
+
+            function renderMovies(){
+                moviesListEl.innerHTML = '';
+                let filtered = movies.slice();
+
+                if (currentSearch) {
+                    filtered = filtered.filter(m => (m.title || '').toLowerCase().includes(currentSearch));
+                }
+                if (currentGenreFilter !== 'all') {
+                    filtered = filtered.filter(m => m.genre === currentGenreFilter);
+                }
+
+                totalMoviesCount.textContent = movies.length + (movies.length === 1 ? ' película' : ' películas');
+                filteredMoviesCount.textContent = filtered.length + (filtered.length === 1 ? ' coincidencia' : ' coincidencias');
+
+                if (filtered.length === 0) {
+                    const noMsg = currentSearch ? 'No hay películas que coincidan con tu búsqueda' :
+                                 (currentGenreFilter !== 'all' ? `No hay películas del género ${currentGenreFilter}` : 'No hay películas en la lista');
+                    moviesListEl.innerHTML = `<div class="no-movies">${escapeHtml(noMsg)}</div>`;
+                    focusedIndex = -1;
+                    return;
+                }
+
+                filtered.forEach((movie, idx)=>{
+                    const item = document.createElement('div');
+                    item.className = 'movie-item';
+                    item.tabIndex = 0;
+                    item.setAttribute('role','button');
+                    item.dataset.index = idx;
+                    item.innerHTML = `
+                        <div class="left">
+                            <div style="width:64px;height:40px;background:#000;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px">▶</div>
+                            <div style="min-width:0">
+                                <div class="title">${escapeHtml(movie.title || 'Sin título')}</div>
+                                <div class="genre">${escapeHtml(movie.genre || '')}</div>
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <button class="action" title="Eliminar" aria-label="Eliminar película" data-url="${escapeHtmlAttr(movie.url || '')}">🗑</button>
+                        </div>
+                    `;
+                    // Clic para reproducir
+                    item.addEventListener('click', (e)=>{
+                        // seleccionar este ítem
+                        const all = moviesListEl.querySelectorAll('.movie-item');
+                        all.forEach(el => el.classList.remove('selected'));
+                        item.classList.add('selected');
+                        // map index from filtered to global
+                        const globalIndex = movies.indexOf(movie);
+                        if (globalIndex >= 0) {
+                            currentPlayingIndex = globalIndex;
+                        } else {
+                            currentPlayingIndex = -1;
+                        }
+                        playMovieAtIndex(globalIndex, { attemptUnmute: true });
+                    });
+
+                    // Eliminar
+                    item.querySelector('button.action').addEventListener('click', (ev)=>{
+                        ev.stopPropagation();
+                        const url = ev.currentTarget.dataset.url;
+                        deleteMovie(url);
+                    });
+
+                    moviesListEl.appendChild(item);
+                });
+
+                // Focus management: focus first item
+                const first = moviesListEl.querySelector('.movie-item');
+                if (first) {
+                    setTimeout(()=>{ first.focus(); }, 50);
+                    focusedIndex = 0;
+                }
+            }
+
+            function playMovieAtIndex(globalIndex, opts = {}){
+                if (globalIndex < 0 || !movies[globalIndex]) return;
+                const movie = movies[globalIndex];
+                const embed = adjustResolution(convertToEmbedUrl(movie.url), currentResolution);
+                // Intenta autoplay con mute, luego intentar unmute por postMessage si es YouTube
+                const separator = embed.includes('?') ? '&' : '?';
+                const autoUrl = embed + separator + 'autoplay=1&mute=1';
+                videoPlayer.src = autoUrl;
+                currentPlayingIndex = globalIndex;
+                showNotification(`Reproduciendo: ${movie.title}`, 'info');
+                // Intento de unmute para youtube embed con postMessage (si permite)
+                if (opts.attemptUnmute) {
+                    setTimeout(()=>{
+                        try{
+                            // Para YouTube iframe API unMute
+                            videoPlayer.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
+                        }catch(e){
+                            // ignorar
+                        }
+                    }, 1000);
+                }
+            }
+
+            function deleteMovie(url){
+                if (!confirm('¿Estás seguro de que quieres eliminar esta película?')) return;
+                movies = movies.filter(m => m.url !== url);
+                saveMoviesToStorage(movies);
+                renderMovies();
+                showNotification('Película eliminada', 'success');
+            }
+
+            function detectPlatform(url){
+                if (!url) return 'unknown';
+                if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+                if (url.includes('dailymotion.com') || url.includes('dai.ly')) return 'dailymotion';
+                if (url.includes('ok.ru') || url.includes('odnoklassniki.ru')) return 'ok';
+                return 'unknown';
+            }
+
+            function convertToEmbedUrl(url){
+                if (!url) return '';
+                if (url.includes('embed')) return url;
+                const platform = detectPlatform(url);
+                try{
+                    if (platform === 'youtube'){
+                        let videoId = '';
+                        const m = url.match(/^.*(youtu.be\/|v\/|u\/\\w\/|embed\/|watch\\?v=|&v=)([^#&?]*).*/);
+                        if (m && m[2]) videoId = m[2];
+                        if (!videoId && url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split(/[?&]/)[0];
+                        if (videoId) return 'https://www.youtube.com/embed/' + videoId;
+                    }
+                    if (platform === 'dailymotion'){
+                        const m = url.match(/^.+dailymotion.com\/(video|hub)\/([^_]+)[^#]*(#video=([^_&]+))?/);
+                        if (m) {
+                            const id = m[4] || m[2];
+                            return 'https://www.dailymotion.com/embed/video/' + id;
+                        } else if (url.includes('dai.ly/')) {
+                            const id = url.split('dai.ly/')[1].split(/[?&]/)[0];
+                            return 'https://www.dailymotion.com/embed/video/' + id;
+                        }
+                    }
+                    if (platform === 'ok'){
+                        if (url.includes('video/')) {
+                            const vid = url.split('video/')[1].split('/')[0].split('?')[0];
+                            return 'https://ok.ru/videoembed/' + vid;
+                        }
+                    }
+                }catch(e){
+                    // ignore
+                }
+                return url;
+            }
+
+            function adjustResolution(url, resolution){
+                if (!url) return '';
+                // cambios simples: para youtube y dailymotion activamos parámetros de calidad
+                if (url.includes('youtube.com/embed')){
+                    switch(resolution){
+                        case '480': return url + '?vq=large';
+                        case '720': return url + '?vq=hd720';
+                        case '1080': return url + '?vq=hd1080';
+                        default: return url;
+                    }
+                }
+                if (url.includes('dailymotion.com/embed')){
+                    switch(resolution){
+                        case '480': return url + '?quality=480';
+                        case '720': return url + '?quality=720';
+                        case '1080': return url + '?quality=1080';
+                        default: return url;
+                    }
+                }
+                return url;
+            }
+
+            function updateMoviesFromUrl(){
+                const url = 'https://yagopc.github.io/Cine/peliculas.json';
+                showNotification('Actualizando películas...', 'info', true);
+                localStorage.removeItem('peliculas');
+                localStorage.setItem('updating','true');
+
+                // timeout wrapper para fetch (algunas TVs tienen fetch muy lentos)
+                const controller = window.AbortController ? new AbortController() : null;
+                const signal = controller ? controller.signal : undefined;
+                const timer = controller ? setTimeout(()=>controller.abort(), 15000) : null;
+
+                fetch(url, {signal})
+                    .then(res=>{
+                        if (!res.ok) throw new Error('No se pudo cargar el archivo remoto');
+                        return res.json();
+                    })
+                    .then(data=>{
+                        if (!Array.isArray(data)) throw new Error('Formato inesperado');
+                        const processed = data.map(m=>{
+                            m.addedAt = m.addedAt || new Date().toISOString();
+                            m.platform = m.platform || detectPlatform(m.url || '');
+                            m.genre = (m.genre && GENRES.includes(m.genre)) ? m.genre : 'Aventura';
+                            m.embedUrl = m.embedUrl || convertToEmbedUrl(m.url || '');
+                            return m;
+                        });
+                        movies = processed;
+                        saveMoviesToStorage(movies);
+                        renderMovies();
+                        showNotification(`Se actualizaron ${movies.length} películas`, 'success');
+                        localStorage.removeItem('updating');
+                    })
+                    .catch(err=>{
+                        console.warn(err);
+                        showNotification('Error al cargar películas: ' + (err.message || 'Desconocido'), 'error');
+                        // Restaurar desde storage si existe
+                        movies = loadMoviesFromStorage();
+                        renderMovies();
+                        localStorage.removeItem('updating');
+                    })
+                    .finally(()=>{ if (timer) clearTimeout(timer); });
+            }
+
+            function showNotification(msg, type='success', persistent=false){
+                notification.textContent = msg;
+                notification.style.background = (type==='error') ? 'var(--danger)' : (type==='info' ? 'var(--info)': 'var(--primary)');
+                notification.classList.add('show');
+                if (!persistent){
+                    setTimeout(()=>notification.classList.remove('show'), 3500);
+                }
+            }
+
+            function deleteAllMoviesForTest(){
+                // helper for debug if needed
+                movies = [];
+                localStorage.removeItem('peliculas');
+                renderMovies();
+            }
+
+            // Navegación por teclado / remote
+            function handleKeyNavigation(e){
+                const KEY = {UP:38, DOWN:40, LEFT:37, RIGHT:39, ENTER:13, OK:13, BACK:10009, RETURN:8};
+                const visibleItems = Array.from(moviesListEl.querySelectorAll('.movie-item'));
+                if (visibleItems.length === 0) return;
+
+                switch(e.keyCode){
+                    case KEY.UP:
+                        e.preventDefault();
+                        focusedIndex = Math.max(0, focusedIndex - 1);
+                        focusMovieItem(visibleItems, focusedIndex);
+                        break;
+                    case KEY.DOWN:
+                        e.preventDefault();
+                        focusedIndex = Math.min(visibleItems.length - 1, focusedIndex + 1);
+                        focusMovieItem(visibleItems, focusedIndex);
+                        break;
+                    case KEY.ENTER:
+                    case KEY.OK:
+                        e.preventDefault();
+                        if (visibleItems[focusedIndex]){
+                            visibleItems[focusedIndex].click();
+                        }
+                        break;
+                    case KEY.LEFT:
+                    case KEY.RIGHT:
+                        // Scroll de la lista horizontalmente (no aplicable) o cambiar resolución
+                        if (e.keyCode === KEY.LEFT){
+                            // disminuir resolución
+                            changeResolutionStep(-1);
+                        } else {
+                            changeResolutionStep(1);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            function focusMovieItem(list, idx){
+                if (!list[idx]) return;
+                list[idx].focus();
+                // marcar visualmente
+                list.forEach(i=>i.classList.remove('selected'));
+                list[idx].classList.add('selected');
+                // asegurar que esté visible en el scroll
+                list[idx].scrollIntoView({block:'nearest',behavior:'smooth'});
+            }
+
+            function changeResolutionStep(direction){
+                const options = Array.from(resolutionSelect.options).map(o=>o.value);
+                const currentIdx = options.indexOf(currentResolution);
+                let next = currentIdx + direction;
+                if (next < 0) next = 0;
+                if (next >= options.length) next = options.length - 1;
+                currentResolution = options[next];
+                resolutionSelect.value = currentResolution;
+                if (currentPlayingIndex >= 0) playMovieAtIndex(currentPlayingIndex, { attemptUnmute: false });
+                showNotification('Resolución: ' + resolutionSelect.options[next].text, 'info');
+            }
+
+            // Utilidades
+            function escapeHtml(str){
+                if (!str) return '';
+                return String(str).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; });
+            }
+            function escapeHtmlAttr(str){
+                return escapeHtml(str).replace(/"/g,'&quot;');
+            }
+
+        })();
+    </script>
+</body>
+</html>
