@@ -10,7 +10,7 @@
         .link-list a { display: block; margin: 5px 0; color: #1a0dab; text-decoration: none; }
         .link-list a:hover { text-decoration: underline; }
         .plain-text { display: block; margin: 5px 0; background-color: black; color: white; padding: 10px; font-family: monospace; }
-        #videoPlayer { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; border: 1px solid #ccc; padding: 10px; display: none; z-index: 1000; box-shadow: 0 4px 8px rgba(0,0,0,0.2);}
+        #videoPlayer { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; border: 1px solid #ccc; padding: 10px; display: none; z-index: 1000; box-shadow: 0 0 15px rgba(0,0,0,0.3);}
         #closeButton { background-color: red; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px; position: absolute; top: -15px; right: -15px;}
         #videoPlayerHeader { cursor: move; background-color: #f1f1f1; padding: 5px; text-align: right; }
         #videoThumbnails { display: flex; flex-wrap: wrap; }
@@ -22,16 +22,32 @@
         #saveSelectionBtn { margin: 20px; padding: 10px 20px; font-size: 16px; }
         #clearLocalStorageBtn { margin: 20px; padding: 10px 20px; font-size: 16px; background: #c21f1f; color: #fff; border: none; border-radius: 5px; cursor: pointer;}
         #clearLocalStorageBtn:hover { background: #a60000; }
+        .cast-btn {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            margin: 20px 10px 20px 0;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+        }
+        .cast-btn.active { display: inline-block; }
+        .cast-btn.disabled { opacity: 0.5; cursor: not-allowed; }
         footer { margin-top: 20px; text-align: center; font-size: 16px; color: #555; }
         footer a { color: #007bff; text-decoration: none; }
         footer a:hover { text-decoration: underline; }
     </style>
+    <!-- Google Cast SDK -->
+    <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 </head>
 <body>
     <h1>Procesar y Reproducir Videos</h1>
     <input type="file" id="file-input" accept=".txt">
     <button id="saveSelectionBtn" style="display:none;">Guardar selección</button>
     <button id="clearLocalStorageBtn">Limpiar Memoria</button>
+    <button id="castBtn" class="cast-btn">Enviar a Chromecast</button>
     <div class="link-list" id="link-list">
         Selecciona un archivo para cargar el contenido...
     </div>
@@ -47,9 +63,15 @@
     </footer>
 
     <script>
+        // Chromecast variables
+        let castContext = null;
+        let currentMediaUrl = null;
+        let currentMediaTitle = null;
+        let isCastApiAvailable = false;
+        let lastCastMediaType = "video/mp4"; // default fallback
+
         // Almacenar selección global
         let selectedVideos = [];
-        // NUEVO: Guardar la última lista y su tipo
         const STORAGE_KEY = "lista_videos_content";
         const STORAGE_TYPE_KEY = "lista_videos_tipo";
 
@@ -61,6 +83,75 @@
                 return false;
             }
         }
+
+        function showCastButton(active) {
+            const castBtn = document.getElementById('castBtn');
+            if (isCastApiAvailable && currentMediaUrl) {
+                castBtn.classList.add('active');
+                castBtn.disabled = false;
+                castBtn.classList.remove('disabled');
+            } else {
+                castBtn.classList.remove('active');
+                castBtn.disabled = true;
+                castBtn.classList.add('disabled');
+            }
+        }
+
+        // Chromecast setup
+        window['__onGCastApiAvailable'] = function(isAvailable) {
+            isCastApiAvailable = isAvailable;
+            if (isAvailable) {
+                cast.framework.CastContext.getInstance().setOptions({
+                    receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+                    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+                });
+                castContext = cast.framework.CastContext.getInstance();
+                showCastButton(true);
+            }
+        };
+
+        function castMedia(url, title, mimeType) {
+            if (!isCastApiAvailable) {
+                alert("Chromecast no está disponible en este navegador/red.");
+                return;
+            }
+            const context = cast.framework.CastContext.getInstance();
+            const session = context.getCurrentSession();
+            if (!session) {
+                context.requestSession().then(() => {
+                    sendMedia(url, title, mimeType);
+                }).catch(() => {
+                    alert("No se pudo conectar al Chromecast.");
+                });
+            } else {
+                sendMedia(url, title, mimeType);
+            }
+        }
+
+        function sendMedia(url, title, mimeType) {
+            const mediaInfo = new chrome.cast.media.MediaInfo(url, mimeType);
+            mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+            mediaInfo.metadata.title = title;
+            const request = new chrome.cast.media.LoadRequest(mediaInfo);
+            cast.framework.CastContext.getInstance().getCurrentSession().loadMedia(request).then(
+                function() { /* media sent */ },
+                function(errorCode) { alert("Error enviando el vídeo a Chromecast: " + errorCode); }
+            );
+        }
+
+        // Actualiza y muestra el botón cast cuando hay video disponible
+        function setCastCurrentMedia(url, title, mimeType) {
+            currentMediaUrl = url;
+            currentMediaTitle = title;
+            lastCastMediaType = mimeType || "video/mp4";
+            showCastButton(true);
+        }
+        // Chromecast button handler
+        document.getElementById('castBtn').addEventListener('click', function() {
+            if (currentMediaUrl) {
+                castMedia(currentMediaUrl, currentMediaTitle || "Video", lastCastMediaType);
+            }
+        });
 
         function processFileContent(content, saveToStorage = false) {
             if(saveToStorage) {
@@ -86,6 +177,8 @@
                 }
             });
             document.getElementById('videoThumbnails').innerHTML = '';
+            currentMediaUrl = null;
+            showCastButton(false);
         }
 
         function processYouTubeFile(content, saveToStorage = false) {
@@ -139,12 +232,15 @@
                 iframeContainer.innerHTML = `<iframe width="560" height="315" src="${youtubeEmbedUrl}${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
                 videoPlayer.style.display = 'block';
                 videoLinkElement.innerHTML = `Ver en YouTube: <a href="${videoUrl}" target="_blank">${videoUrl}</a>`;
+                setCastCurrentMedia(`https://www.youtube.com/watch?v=${videoId}`, `YouTube: ${videoId}`, "video/mp4"); // Chromecast will need a direct video URL or use a receiver compatible with YouTube
             }
 
             window.closeVideo = function() {
                 document.getElementById('videoPlayer').style.display = 'none';
                 document.getElementById('iframeContainer').innerHTML = '';
                 videoLinkElement.innerHTML = '';
+                currentMediaUrl = null;
+                showCastButton(false);
             };
 
             dragElement(document.getElementById("videoPlayer"));
@@ -175,7 +271,6 @@
             }
         }
 
-        // NUEVA FUNCIÓN PARA DAILYMOTION
         function processDailymotionFile(content, saveToStorage = false) {
             if(saveToStorage) {
                 localStorage.setItem(STORAGE_KEY, content);
@@ -227,12 +322,15 @@
                 iframeContainer.innerHTML = `<iframe width="560" height="315" src="${dailymotionEmbedUrl}${videoId}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
                 videoPlayer.style.display = 'block';
                 videoLinkElement.innerHTML = `Ver en Dailymotion: <a href="${videoUrl}" target="_blank">${videoUrl}</a>`;
+                setCastCurrentMedia(videoUrl, `Dailymotion: ${videoId}`, "video/mp4"); // Chromecast works with direct video links, not always with web URLs
             }
 
             window.closeVideo = function() {
                 document.getElementById('videoPlayer').style.display = 'none';
                 document.getElementById('iframeContainer').innerHTML = '';
                 videoLinkElement.innerHTML = '';
+                currentMediaUrl = null;
+                showCastButton(false);
             };
 
             dragElement(document.getElementById("videoPlayer"));
@@ -296,7 +394,7 @@
                 const img = document.createElement('img');
                 img.src = thumbnailUrl;
                 img.alt = `Thumbnail of video ${code}`;
-                img.onclick = function() { playVideo(videoUrl); };
+                img.onclick = function() { playVideo(videoUrl, code); };
                 img.onerror = function() {
                     container.style.display = 'none';
                 };
@@ -305,86 +403,4 @@
                 thumbnailsContainer.appendChild(container);
             });
 
-            function playVideo(videoUrl) {
-                const videoPlayer = document.getElementById('videoPlayer');
-                const iframeContainer = document.getElementById('iframeContainer');
-                iframeContainer.innerHTML = `<video width="560" height="315" controls autoplay><source src="${videoUrl}" type="video/mp4">Tu navegador no soporta la reproducción de videos en formato mp4.</video>`;
-                videoPlayer.style.display = 'block';
-            }
-
-            window.closeVideo = function() {
-                document.getElementById('videoPlayer').style.display = 'none';
-                document.getElementById('iframeContainer').innerHTML = '';
-            };
-        }
-
-        // Guardar la selección en un archivo .txt
-        document.getElementById('saveSelectionBtn').addEventListener('click', function() {
-            if(selectedVideos.length === 0) {
-                alert('No has seleccionado ningún video.');
-                return;
-            }
-            const content = selectedVideos.join('\n');
-            const blob = new Blob([content], {type: "text/plain"});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = "seleccion_videos.txt";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
-
-        // NUEVO: Limpiar memoria y campos
-        document.getElementById('clearLocalStorageBtn').addEventListener('click', function() {
-            localStorage.removeItem(STORAGE_KEY);
-            localStorage.removeItem(STORAGE_TYPE_KEY);
-            document.getElementById('file-input').value = "";
-            document.getElementById('link-list').textContent = 'Selecciona un archivo para cargar el contenido...';
-            document.getElementById('videoThumbnails').innerHTML = '';
-            document.getElementById('videoPlayer').style.display = 'none';
-            document.getElementById('iframeContainer').innerHTML = '';
-            document.getElementById('videoLink').innerHTML = '';
-            document.getElementById('saveSelectionBtn').style.display = 'none';
-            selectedVideos = [];
-        });
-
-        // Cuando se carga la página, si hay lista guardada en localStorage, cargarla
-        window.addEventListener('DOMContentLoaded', function() {
-            const content = localStorage.getItem(STORAGE_KEY);
-            const tipo = localStorage.getItem(STORAGE_TYPE_KEY);
-            if(content && tipo) {
-                if(tipo === "plain") processFileContent(content, false);
-                else if(tipo === "youtube") processYouTubeFile(content, false);
-                else if(tipo === "dailymotion") processDailymotionFile(content, false);
-                else if(tipo === "cdn5") processCdn5File(content, false);
-            }
-        });
-
-        document.getElementById('file-input').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const content = e.target.result;
-                    const name = file.name.toLowerCase();
-                    // Guardar en localStorage cada vez que se carga un archivo
-                    if (name.includes("cdn5")) {
-                        processCdn5File(content, true);
-                    } else if (name.includes("youtube")) {
-                        processYouTubeFile(content, true);
-                    } else if (name.startsWith("dailymotion")) {
-                        processDailymotionFile(content, true);
-                    } else {
-                        processFileContent(content, true);
-                    }
-                };
-                reader.readAsText(file);
-            } else {
-                document.getElementById('link-list').textContent = 'No se seleccionó ningún archivo.';
-            }
-        });
-    </script>
-</body>
-</html>
+            function playVideo(vide
