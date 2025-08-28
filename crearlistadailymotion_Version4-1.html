@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extractor de URLs de Dailymotion con Múltiples Proxies</title>
+    <style>
+        /* ... (Todo tu CSS igual, sin cambios) ... */
+        :root { --primary: #0066cc; --secondary: #00a1ff; --accent: #ff5722; --light: #f5f9ff; --dark: #333; --success: #28a745; --warning: #ffc107; --danger: #dc3545; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #333; min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { background-color: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); width: 90%; max-width: 1000px; padding: 30px; margin-top: 20px; }
+        h1 { color: var(--primary); text-align: center; margin-bottom: 15px; font-size: 2.2rem; }
+        .subtitle { text-align: center; color: var(--accent); margin-bottom: 20px; font-weight: 500; }
+        .description { text-align: center; margin-bottom: 25px; color: #555; line-height: 1.6; padding: 15px; background-color: var(--light); border-radius: 8px; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary); }
+        input[type="text"] { width: 100%; padding: 12px 15px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; transition: border-color 0.3s; }
+        input[type="text"]:focus { border-color: var(--primary); outline: none; }
+        .proxy-selector { margin: 20px 0; padding: 15px; background-color: var(--light); border-radius: 8px; }
+        .proxy-options { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .proxy-option { flex: 1; min-width: 200px; }
+        .proxy-option input[type="radio"] { margin-right: 8px; }
+        .btn { padding: 12px 25px; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-block; text-align: center; }
+        .btn-primary { background: linear-gradient(to right, var(--primary), var(--secondary)); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: var(--dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+        .btn:active { transform: translateY(0); }
+        .center-buttons { display: flex; justify-content: center; gap: 15px; margin: 20px 0; flex-wrap: wrap; }
+        .result-container { margin-top: 30px; display: none; }
+        .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .result-title { font-size: 1.4rem; color: var(--primary); }
+        .url-list { border: 1px solid #ddd; border-radius: 6px; padding: 15px; max-height: 300px; overflow-y: auto; background-color: var(--light); }
+        .url-item { padding: 10px; border-bottom: 1px solid #eee; word-break: break-all; display: flex; justify-content: space-between; align-items: center; }
+        .url-item:last-child { border-bottom: none; }
+        .url-text { flex-grow: 1; margin-right: 10px; }
+        .url-actions { display: flex; gap: 8px; }
+        .btn-sm { padding: 6px 12px; font-size: 14px; }
+        .loader { display: none; text-align: center; margin: 20px 0; }
+        .loader-spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .error { color: var(--danger); text-align: center; margin-top: 20px; display: none; padding: 10px; background-color: #f8d7da; border-radius: 4px; border: 1px solid #f5c6cb; }
+        .success { color: var(--success); text-align: center; margin-top: 20px; display: none; padding: 10px; background-color: #d4edda; border-radius: 4px; border: 1px solid #c3e6cb; }
+        .instructions { background-color: var(--light); padding: 20px; border-radius: 8px; margin-top: 30px; }
+        .instructions h3 { color: var(--primary); margin-bottom: 15px; }
+        .instructions ol { margin-left: 20px; line-height: 1.8; }
+        .instructions li { margin-bottom: 10px; }
+        .api-info { background-color: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 4px solid var(--warning); }
+        .api-info h3 { color: var(--warning); margin-bottom: 10px; }
+        .proxy-status { margin-top: 10px; font-size: 14px; color: #666; }
+        @media (max-width: 768px) { .container { padding: 20px; width: 95%; } h1 { font-size: 1.8rem; } .center-buttons { flex-direction: column; } .result-header { flex-direction: column; align-items: flex-start; } .proxy-options { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Extractor de URLs de Dailymotion</h1>
+        <p class="subtitle">Con múltiples proxies CORS alternativos</p>
+        
+        <div class="description">
+            <p>Esta herramienta te permite extraer las URLs de videos de listas públicas de Dailymotion utilizando diferentes proxies CORS.</p>
+            <p><strong>Nota:</strong> Si un proxy no funciona, prueba con otro de la lista.</p>
+        </div>
+        
+        <div class="input-group">
+            <label for="playlist-url">URL de la lista de Dailymotion:</label>
+            <input type="text" id="playlist-url" placeholder="Ej: https://www.dailymotion.com/playlist/x123abc">
+        </div>
+        
+        <div class="proxy-selector">
+            <label>Selecciona un proxy CORS:</label>
+            <div class="proxy-options" id="proxy-options"></div>
+            <div class="proxy-status" id="proxy-status">Proxy seleccionado: Cors Anywhere (Heroku)</div>
+        </div>
+        
+        <div class="center-buttons">
+            <button id="extract-btn" class="btn btn-primary">Extraer URLs</button>
+            <button id="test-proxies-btn" class="btn btn-warning">Probar Proxies</button>
+            <button id="clear-btn" class="btn btn-danger">Limpiar</button>
+        </div>
+        
+        <div class="loader" id="loader">
+            <div class="loader-spinner"></div>
+            <p id="loader-text">Extrayendo URLs, por favor espera...</p>
+        </div>
+        
+        <div class="error" id="error"></div>
+        <div class="success" id="success"></div>
+        
+        <div class="result-container" id="result-container">
+            <div class="result-header">
+                <h2 class="result-title">Videos extraídos</h2>
+                <div>
+                    <button class="btn btn-success btn-sm" id="copy-btn">Copiar JSON</button>
+                    <button class="btn btn-primary btn-sm" id="export-btn">Exportar JSON</button>
+                </div>
+            </div>
+            <div class="url-list" id="url-list"></div>
+        </div>
+        
+        <div class="api-info">
+            <h3>Proxies CORS disponibles</h3>
+            <p>Esta herramienta utiliza diferentes proxies CORS para evitar restricciones de los navegadores. Si uno falla, puedes probar con otro.</p>
+        </div>
+        
+        <div class="instructions">
+            <h3>Instrucciones:</h3>
+            <ol>
+                <li>Pega la URL de una lista pública de Dailymotion</li>
+                <li>Selecciona un proxy CORS (si uno no funciona, prueba con otro)</li>
+                <li>Haz clic en "Extraer URLs"</li>
+                <li>Si tienes problemas, usa el botón "Probar Proxies" para encontrar el que funcione mejor</li>
+                <li>Copia o exporta el JSON generado compatible con Dailymotionnuevo.json</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const proxyList = [
+                { url: 'https://cors-anywhere.herokuapp.com/', name: 'Cors Anywhere (Heroku)', format: url => 'https://cors-anywhere.herokuapp.com/' + url },
+                { url: 'https://api.allorigins.win/raw?url=', name: 'AllOrigins', format: url => 'https://api.allorigins.win/raw?url=' + url },
+                { url: 'https://cors.bridged.cc/', name: 'CORS Bridged', format: url => 'https://cors.bridged.cc/' + url },
+                { url: 'https://proxy.cors.sh/', name: 'CORS.sh', format: url => 'https://proxy.cors.sh/' + url },
+                { url: 'https://corsproxy.io/?', name: 'CORS Proxy.io', format: url => 'https://corsproxy.io/?' + url },
+                { url: 'https://api.cors.lol/?url=', name: 'CORS.lol', format: url => 'https://api.cors.lol/?url=' + url },
+                { url: 'https://corsfix.com/', name: 'CORSFix', format: url => 'https://corsfix.com/' + url },
+                { url: 'https://api.codetabs.com/v1/proxy?quest=', name: 'Codetabs', format: url => 'https://api.codetabs.com/v1/proxy?quest=' + url }
+            ];
+
+            // Generar opciones de proxy dinámicamente
+            const proxyOptionsDiv = document.getElementById('proxy-options');
+            proxyList.forEach((proxy, idx) => {
+                const id = 'proxy' + idx;
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'proxy-option';
+                optionDiv.innerHTML = `
+                    <input type="radio" id="${id}" name="proxy" value="${idx}" ${idx === 0 ? 'checked' : ''}>
+                    <label for="${id}">${proxy.name}</label>
+                `;
+                proxyOptionsDiv.appendChild(optionDiv);
+            });
+
+            const extractBtn = document.getElementById('extract-btn');
+            const testProxiesBtn = document.getElementById('test-proxies-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const playlistUrlInput = document.getElementById('playlist-url');
+            const loader = document.getElementById('loader');
+            const loaderText = document.getElementById('loader-text');
+            const errorDiv = document.getElementById('error');
+            const successDiv = document.getElementById('success');
+            const resultContainer = document.getElementById('result-container');
+            const urlList = document.getElementById('url-list');
+            const copyBtn = document.getElementById('copy-btn');
+            const exportBtn = document.getElementById('export-btn');
+            const proxyStatus = document.getElementById('proxy-status');
+
+            let lastExtractedVideos = [];
+
+            proxyOptionsDiv.addEventListener('change', function(e) {
+                if (e.target.name === 'proxy') {
+                    const idx = parseInt(e.target.value, 10);
+                    proxyStatus.textContent = `Proxy seleccionado: ${proxyList[idx].name}`;
+                }
+            });
+
+            // URL de ejemplo para pruebas
+            playlistUrlInput.value = 'https://www.dailymotion.com/playlist/x7mngz';
+
+            extractBtn.addEventListener('click', function() {
+                const playlistUrl = playlistUrlInput.value.trim();
+
+                if (!playlistUrl) {
+                    showError('Por favor, ingresa una URL válida de Dailymotion');
+                    return;
+                }
+
+                if (!isValidDailymotionUrl(playlistUrl)) {
+                    showError('La URL ingresada no parece ser una lista de Dailymotion válida');
+                    return;
+                }
+
+                // Obtener proxy seleccionado
+                const selectedIdx = parseInt(document.querySelector('input[name="proxy"]:checked').value, 10);
+                const selectedProxy = proxyList[selectedIdx];
+
+                hideMessages();
+                resultContainer.style.display = 'none';
+                urlList.innerHTML = '';
+
+                loader.style.display = 'block';
+                loaderText.textContent = 'Extrayendo URLs, por favor espera...';
+
+                extractUrls(playlistUrl, selectedProxy);
+            });
+
+            testProxiesBtn.addEventListener('click', function() {
+                const playlistUrl = playlistUrlInput.value.trim();
+
+                if (!playlistUrl) {
+                    showError('Por favor, ingresa una URL válida de Dailymotion para probar los proxies');
+                    return;
+                }
+
+                hideMessages();
+                loader.style.display = 'block';
+                loaderText.textContent = 'Probando proxies, por favor espera...';
+
+                testProxies(playlistUrl);
+            });
+
+            clearBtn.addEventListener('click', function() {
+                playlistUrlInput.value = '';
+                hideMessages();
+                resultContainer.style.display = 'none';
+                urlList.innerHTML = '';
+            });
+
+            // COPIAR en formato JSON
+            copyBtn.addEventListener('click', function() {
+                if (!lastExtractedVideos.length) {
+                    showError('No hay datos para copiar');
+                    return;
+                }
+                const jsonStr = JSON.stringify(lastExtractedVideos, null, 4);
+                navigator.clipboard.writeText(jsonStr)
+                    .then(() => {
+                        showSuccess('¡JSON copiado al portapapeles!');
+                    })
+                    .catch(err => {
+                        showError('No se pudo copiar el JSON: ' + err);
+                    });
+            });
+
+            // EXPORTAR en formato JSON
+            exportBtn.addEventListener('click', function() {
+                if (!lastExtractedVideos.length) {
+                    showError('No hay datos para exportar');
+                    return;
+                }
+                const jsonStr = JSON.stringify(lastExtractedVideos, null, 4);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'Dailymotionnuevo.json';
+                a.click();
+            });
+
+            function isValidDailymotionUrl(url) {
+                return url.includes('dailymotion.com') && url.includes('playlist');
+            }
+
+            function extractUrls(playlistUrl, proxyObj) {
+                const encodedUrl = encodeURIComponent(playlistUrl);
+                let targetUrl = proxyObj.format(playlistUrl);
+
+                if (
+                    proxyObj.url.endsWith('?') ||
+                    proxyObj.url.endsWith('=') ||
+                    proxyObj.url.includes('corsproxy.io') ||
+                    proxyObj.url.includes('corsfix.com') ||
+                    proxyObj.url.includes('api.codetabs.com')
+                ) {
+                    targetUrl = proxyObj.url + encodedUrl;
+                } else {
+                    targetUrl = proxyObj.url + playlistUrl;
+                }
+
+                fetch(targetUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al cargar la lista mediante el proxy');
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    // Parsear el HTML para extraer las URLs, títulos y duración
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Buscar todos los enlaces de videos
+                    const videoLinks = doc.querySelectorAll('a[href*="/video/"]');
+                    if (videoLinks.length === 0) throw new Error('No se encontraron videos en esta lista');
+
+                    // Extraer datos únicos por ID
+                    const videos = {};
+                    videoLinks.forEach(link => {
+                        const href = link.getAttribute('href');
+                        if (href && href.includes('/video/')) {
+                            // URL y ID
+                            let url = href.startsWith('http') ? href : `https://www.dailymotion.com${href}`;
+                            url = url.split('?')[0];
+                            const match = url.match(/\/video\/([a-zA-Z0-9]+)/);
+                            if (!match) return;
+                            const id = match[1];
+
+                            // Título
+                            let title = (link.getAttribute('title') || link.textContent || '').trim();
+                            // Si el título no está en el enlace, buscar en el DOM
+                            if (!title) {
+                                const parent = link.closest('.media-block, .MediaBlock, li, .list_item, .video-list-item');
+                                if (parent) {
+                                    const titleNode = parent.querySelector('.media-title, .MediaBlock-title, .video-title');
+                                    if (titleNode) title = titleNode.textContent.trim();
+                                }
+                            }
+
+                            // Duración
+                            let duration = '';
+                            // Buscar span con clase duration dentro del mismo bloque
+                            let durationNode = null;
+                            let searchParent = link.closest('.media-block, .MediaBlock, li, .list_item, .video-list-item') || link.parentElement;
+                            if (searchParent) {
+                                durationNode = searchParent.querySelector('.duration, .MediaBlock-duration, .media-duration, .video-duration');
+                            }
+                            // Prueba extra: buscar data-duration
+                            if (!durationNode && link.hasAttribute('data-duration')) {
+                                duration = formatSeconds(link.getAttribute('data-duration'));
+                            } else if (durationNode) {
+                                duration = durationNode.textContent.trim();
+                            } else {
+                                // A veces está en un atributo data-duration en el elemento padre
+                                const dataduration = searchParent && searchParent.getAttribute('data-duration');
+                                if (dataduration) duration = formatSeconds(dataduration);
+                            }
+
+                            if (/^\d+$/.test(duration)) {
+                                duration = formatSeconds(duration);
+                            }
+                            // Para compatibilidad con el JSON: si no hay título/duración, poner string vacío/duración "unknown"
+                            if (!videos[id] || (title && !videos[id].title) || (duration && !videos[id].duration)) {
+                                videos[id] = {
+                                    id,
+                                    title: title || "",
+                                    duration: duration || "unknown"
+                                };
+                            }
+                        }
+                    });
+
+                    const videosArr = Object.values(videos);
+                    lastExtractedVideos = videosArr;
+                    showUrls(videosArr);
+                })
+                .catch(error => {
+                    loader.style.display = 'none';
+                    showError('Error con el proxy: ' + error.message + '. Prueba con otro proxy.');
+                });
+            }
+
+            function formatSeconds(seconds) {
+                seconds = parseInt(seconds, 10);
+                if (isNaN(seconds)) return seconds;
+                const min = Math.floor(seconds / 60);
+                const sec = seconds % 60;
+                return `${min}:${sec.toString().padStart(2, '0')}`;
+            }
+
+            function testProxies(playlistUrl) {
+                let workingProxy = null;
+                let tested = 0;
+
+                proxyList.forEach((proxy, idx) => {
+                    const encodedUrl = encodeURIComponent(playlistUrl);
+                    let testUrl = proxy.format(playlistUrl);
+
+                    if (
+                        proxy.url.endsWith('?') ||
+                        proxy.url.endsWith('=') ||
+                        proxy.url.includes('corsproxy.io') ||
+                        proxy.url.includes('corsfix.com') ||
+                        proxy.url.includes('api.codetabs.com')
+                    ) {
+                        testUrl = proxy.url + encodedUrl;
+                    } else {
+                        testUrl = proxy.url + playlistUrl;
+                    }
+
+                    fetch(testUrl, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            workingProxy = proxy;
+                            document.querySelector(`input[name="proxy"][value="${idx}"]`).checked = true;
+                            proxyStatus.textContent = `Proxy seleccionado: ${proxy.name} (funciona)`;
+                            extractUrls(playlistUrl, proxy);
+                            return;
+                        }
+                        throw new Error('Proxy no funciona');
+                    })
+                    .catch(error => {
+                        tested++;
+                        if (tested === proxyList.length && !workingProxy) {
+                            loader.style.display = 'none';
+                            showError('Ninguno de los proxies funciona en este momento. Intenta más tarde.');
+                        }
+                    });
+                });
+            }
+
+            function showUrls(videos) {
+                loader.style.display = 'none';
+
+                if (videos.length === 0) {
+                    showError('No se encontraron URLs en esta lista');
+                    return;
+                }
+
+                urlList.innerHTML = '';
+                videos.forEach(video => {
+                    const urlItem = document.createElement('div');
+                    urlItem.classList.add('url-item');
+                    urlItem.setAttribute('data-id', video.id);
+                    urlItem.setAttribute('data-title', video.title);
+                    urlItem.setAttribute('data-duration', video.duration);
+
+                    const urlText = document.createElement('span');
+                    urlText.classList.add('url-text');
+                    urlText.textContent = `ID: ${video.id} | Título: ${video.title || '(Sin título)'} | Duración: ${video.duration}`;
+
+                    const urlActions = document.createElement('div');
+                    urlActions.classList.add('url-actions');
+
+                    const copyBtn = document.createElement('button');
+                    copyBtn.classList.add('btn', 'btn-primary', 'btn-sm');
+                    copyBtn.textContent = 'Copiar JSON';
+                    copyBtn.addEventListener('click', () => {
+                        const videoJson = JSON.stringify({
+                            id: video.id,
+                            title: video.title,
+                            duration: video.duration
+                        }, null, 4);
+                        navigator.clipboard.writeText(videoJson)
+                            .then(() => {
+                                showSuccess('Video en formato JSON copiado al portapapeles');
+                            })
+                            .catch(err => {
+                                showError('No se pudo copiar el JSON: ' + err);
+                            });
+                    });
+
+                    const openBtn = document.createElement('button');
+                    openBtn.classList.add('btn', 'btn-success', 'btn-sm');
+                    openBtn.textContent = 'Abrir';
+                    openBtn.addEventListener('click', () => {
+                        window.open('https://www.dailymotion.com/video/' + video.id, '_blank');
+                    });
+
+                    urlActions.appendChild(copyBtn);
+                    urlActions.appendChild(openBtn);
+
+                    urlItem.appendChild(urlText);
+                    urlItem.appendChild(urlActions);
+
+                    urlList.appendChild(urlItem);
+                });
+
+                resultContainer.style.display = 'block';
+                showSuccess(`Se encontraron ${videos.length} videos en la lista`);
+            }
+
+            function showError(message) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+            function showSuccess(message) {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                setTimeout(hideMessages, 3000);
+            }
+            function hideMessages() {
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
