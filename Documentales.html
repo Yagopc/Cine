@@ -418,10 +418,10 @@
 
         // Abrir en VLC Android con la URL corta (dai.ly/ID)
         function openInVLC() {
-            if (lastPlayingUrl) {
-                // Intenta abrir con vlc:// usando la URL corta que VLC acepta mejor
-                window.location.href = 'vlc://' + lastPlayingUrl;
-            }
+    if (lastPlayingUrl) {
+        // Solo la URL normal, sin vlc://
+        window.location.href = lastPlayingUrl;
+    }
         }
 
         document.getElementById('clearLocalStorageBtn').addEventListener('click', function() {
