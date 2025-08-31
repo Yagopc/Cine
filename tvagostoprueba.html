@@ -527,19 +527,25 @@
         isUsingDefaultList = false;
     }
     function loadChannelsData() {
-        try {
-            const saved = localStorage.getItem('channelsData');
-            if (saved) {
-                channelsData = JSON.parse(saved);
+    try {
+        const saved = localStorage.getItem('channelsData');
+        if (saved) {
+            channelsData = JSON.parse(saved);
+            // Verificar si channelsData tiene elementos y no es un array vacío
+            if (channelsData && channelsData.length > 0) {
                 isUsingDefaultList = false;
                 return true;
+            } else {
+                channelsData = []; // Asegurarse de que esté vacío
+                return false;
             }
-            return false;
-        } catch (e) {
-            channelsData = [];
-            return false;
         }
+        return false;
+    } catch (e) {
+        channelsData = [];
+        return false;
     }
+}
 
     function initEvents() {
         loadButton.addEventListener('click', () => fileInput.click());
