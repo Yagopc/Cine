@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lector de Noticias RSS</title>
+    <style>
+        /* ... (los estilos son iguales al original, puedes mantenerlos) ... */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+        body { background-color: #f5f5f5; color: #333; line-height: 1.6; padding: 20px;}
+        header { text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #1e5799 0%,#207cca 51%,#2989d8 100%); color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+        h1 { font-size: 2.5rem; margin-bottom: 10px;}
+        .description { font-size: 1.1rem; max-width: 800px; margin: 0 auto;}
+        .controls { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px;}
+        .btn { padding: 12px 25px; border: none; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+        .btn-reload { background-color: #4CAF50; color: white;}
+        .btn-reload:hover { background-color: #3e8e41; transform: translateY(-2px);}
+        .btn-read { background-color: #2196F3; color: white;}
+        .btn-read:hover { background-color: #0b7dda; transform: translateY(-2px);}
+        .btn-stop { background-color: #f44336; color: white;}
+        .btn-stop:hover { background-color: #d32f2f; transform: translateY(-2px);}
+        .container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 40px;}
+        .newspaper { background-color: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); transition: transform 0.3s ease;}
+        .newspaper:hover { transform: translateY(-5px);}
+        .newspaper-header { display: flex; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0;}
+        .newspaper-icon { width: 40px; height: 40px; margin-right: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; border-radius: 50%;}
+        .newspaper-title { font-size: 1.4rem; font-weight: 700; color: #2c3e50;}
+        .news-list { list-style: none;}
+        .news-item { padding: 12px 0; border-bottom: 1px solid #eee;}
+        .news-item:last-child { border-bottom: none;}
+        .news-title { font-weight: 500; margin-bottom: 5px; color: #333;}
+        .news-date { font-size: 0.8rem; color: #777;}
+        .news-image { width: 100%; border-radius: 8px; margin-top: 10px; height: 160px; object-fit: cover;}
+        .status { text-align: center; padding: 15px; margin-top: 20px; background-color: #fff9c4; border-radius: 8px; font-weight: 500;}
+        footer { text-align: center; margin-top: 40px; padding: 20px; color: #777; font-size: 0.9rem;}
+        .loading { display: flex; justify-content: center; align-items: center; height: 100px;}
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;}
+        @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr;}
+            .controls { flex-direction: column; align-items: center;}
+            .btn { width: 200px;}
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Lector de Noticias RSS</h1>
+        <p class="description">Últimas noticias de los principales periódicos de España. Actualizado automáticamente desde sus feeds RSS.</p>
+    </header>
+    
+    <div class="controls">
+        <button class="btn btn-reload" onclick="cargarNoticias()">Releer Noticias</button>
+        <button class="btn btn-read" onclick="leerNoticias()">Leer en Voz Alta</button>
+        <button class="btn btn-stop" onclick="detenerLectura()">Detener Lectura</button>
+    </div>
+    
+    <div class="container" id="contenedor-noticias">
+        <div class="loading">
+            <div class="spinner"></div>
+        </div>
+    </div>
+    
+    <div class="status" id="status">
+        Cargando noticias desde los feeds RSS...
+    </div>
+    
+    <footer>
+        <p>Lector de noticias &copy; 2023 | Actualizado automáticamente desde las fuentes originales</p>
+    </footer>
+
+    <script>
+        // URLs de los feeds RSS (algunos pueden requerir proxy por políticas CORS)
+        const feeds = {
+            'elpais': 'https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada',
+            'elmundo': 'https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml',
+            'abc': 'https://www.abc.es/rss/feeds/abcPortada.xml',
+            'lavanguardia': 'https://www.lavanguardia.com/rss/home.xml',
+            'efe': 'https://efe.com/feed/'
+        };
+
+        // Nombres completos de los periódicos
+        const newspaperNames = {
+            'elpais': 'El País',
+            'elmundo': 'El Mundo',
+            'abc': 'ABC',
+            'lavanguardia': 'La Vanguardia',
+            'efe': 'Agencia EFE'
+        };
+
+        // Colores para cada periódico
+        const newspaperColors = {
+            'elpais': '#E41B23',
+            'elmundo': '#00A0E3',
+            'abc': '#000000',
+            'lavanguardia': '#001E50',
+            'efe': '#D52B1E'
+        };
+
+        // Iniciales para los iconos
+        const newspaperInitials = {
+            'elpais': 'EP',
+            'elmundo': 'EM',
+            'abc': 'ABC',
+            'lavanguardia': 'LV',
+            'efe': 'EF'
+        };
+
+        // Almacenar las noticias cargadas
+        let noticiasCargadas = [];
+
+        document.addEventListener('DOMContentLoaded', cargarNoticias);
+
+        async function cargarNoticias() {
+            const contenedor = document.getElementById('contenedor-noticias');
+            const status = document.getElementById('status');
+            contenedor.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            status.textContent = 'Cargando noticias desde los feeds RSS...';
+            noticiasCargadas = [];
+
+            try {
+                for (const [key, url] of Object.entries(feeds)) {
+                    try {
+                        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                        const response = await fetch(proxyUrl);
+
+                        if (!response.ok) throw new Error(`Error al cargar ${key}: ${response.status}`);
+
+                        const text = await response.text();
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(text, "application/xml");
+
+                        // Extraer noticias del feed
+                        // Algunos feeds usan <entry> en vez de <item> (por ejemplo, Atom). Adaptamos:
+                        let items = xmlDoc.querySelectorAll('item');
+                        if (items.length === 0) {
+                            items = xmlDoc.querySelectorAll('entry');
+                        }
+
+                        // Limitar a 10 noticias por periódico
+                        const limite = Math.min(items.length, 10);
+                        const noticias = [];
+
+                        for (let i = 0; i < limite; i++) {
+                            const item = items[i];
+                            // Extraer título, enlace, fecha, descripción
+                            const titulo = item.querySelector('title')?.textContent?.trim() || 'Sin título';
+                            const enlace = item.querySelector('link')?.textContent?.trim() || item.querySelector('link')?.getAttribute('href') || '#';
+                            let fecha = item.querySelector('pubDate')?.textContent?.trim() ||
+                                        item.querySelector('published')?.textContent?.trim() ||
+                                        item.querySelector('updated')?.textContent?.trim() ||
+                                        'Fecha no disponible';
+
+                            // Normalizar fecha (puede venir en varios formatos)
+                            let fechaLocal = 'Fecha no disponible';
+                            if (fecha && fecha !== 'Fecha no disponible') {
+                                const dateObj = new Date(fecha);
+                                if (!isNaN(dateObj)) fechaLocal = dateObj.toLocaleString('es-ES');
+                                else fechaLocal = fecha;
+                            }
+
+                            const descripcion = item.querySelector('description')?.textContent?.trim() ||
+                                                item.querySelector('summary')?.textContent?.trim() || '';
+
+                            // Extraer imagen: media:content, enclosure, description (img), etc.
+                            let imagen = '';
+                            // media:content
+                            const mediaContent = item.querySelector('media\\:content, content');
+                            if (mediaContent && mediaContent.getAttribute('url')) {
+                                imagen = mediaContent.getAttribute('url');
+                            }
+                            // enclosure
+                            if (!imagen) {
+                                const enclosure = item.querySelector('enclosure');
+                                if (enclosure && enclosure.getAttribute('url') && enclosure.getAttribute('type')?.startsWith('image')) {
+                                    imagen = enclosure.getAttribute('url');
+                                }
+                            }
+                            // <img> en description
+                            if (!imagen && descripcion) {
+                                const imgMatch = descripcion.match(/<img[^>]+src="([^">]+)"/i);
+                                if (imgMatch && imgMatch[1]) imagen = imgMatch[1];
+                            }
+                            // <img> en content:encoded
+                            if (!imagen) {
+                                const contentEncoded = item.querySelector('content\\:encoded');
+                                if (contentEncoded) {
+                                    const imgMatch = contentEncoded.textContent.match(/<img[^>]+src="([^">]+)"/i);
+                                    if (imgMatch && imgMatch[1]) imagen = imgMatch[1];
+                                }
+                            }
+
+                            noticias.push({
+                                titulo,
+                                enlace,
+                                fecha: fechaLocal,
+                                imagen,
+                                descripcion
+                            });
+
+                            // Para lectura por voz
+                            noticiasCargadas.push({
+                                periodico: newspaperNames[key],
+                                titulo,
+                                fecha: fechaLocal
+                            });
+                        }
+
+                        mostrarNoticias(key, noticias);
+
+                    } catch (error) {
+                        console.error(`Error al procesar ${key}:`, error);
+                        mostrarError(key, error.message);
+                    }
+                }
+                status.textContent = 'Noticias cargadas correctamente.';
+            } catch (error) {
+                console.error('Error general:', error);
+                status.textContent = `Error: ${error.message}. Recargue la página o intente más tarde.`;
+            }
+        }
+
+        function mostrarNoticias(periodicoKey, noticias) {
+            const contenedor = document.getElementById('contenedor-noticias');
+            if (contenedor.querySelector('.loading')) contenedor.innerHTML = '';
+
+            const periodicoDiv = document.createElement('div');
+            periodicoDiv.className = 'newspaper';
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'newspaper-header';
+
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'newspaper-icon';
+            iconDiv.style.backgroundColor = newspaperColors[periodicoKey];
+            iconDiv.textContent = newspaperInitials[periodicoKey];
+
+            const titleH2 = document.createElement('h2');
+            titleH2.className = 'newspaper-title';
+            titleH2.textContent = newspaperNames[periodicoKey];
+
+            headerDiv.appendChild(iconDiv);
+            headerDiv.appendChild(titleH2);
+
+            const listaUl = document.createElement('ul');
+            listaUl.className = 'news-list';
+
+            noticias.forEach(noticia => {
+                const itemLi = document.createElement('li');
+                itemLi.className = 'news-item';
+
+                const tituloDiv = document.createElement('div');
+                tituloDiv.className = 'news-title';
+
+                const enlace = document.createElement('a');
+                enlace.href = noticia.enlace;
+                enlace.target = '_blank';
+                enlace.rel = 'noopener noreferrer';
+                enlace.textContent = noticia.titulo;
+
+                tituloDiv.appendChild(enlace);
+
+                const fechaDiv = document.createElement('div');
+                fechaDiv.className = 'news-date';
+                fechaDiv.textContent = noticia.fecha;
+
+                itemLi.appendChild(tituloDiv);
+                itemLi.appendChild(fechaDiv);
+
+                if (noticia.imagen) {
+                    const imagen = document.createElement('img');
+                    imagen.className = 'news-image';
+                    imagen.src = noticia.imagen;
+                    imagen.alt = noticia.titulo;
+                    itemLi.appendChild(imagen);
+                }
+
+                listaUl.appendChild(itemLi);
+            });
+
+            periodicoDiv.appendChild(headerDiv);
+            periodicoDiv.appendChild(listaUl);
+
+            contenedor.appendChild(periodicoDiv);
+        }
+
+        function mostrarError(periodicoKey, mensaje) {
+            const contenedor = document.getElementById('contenedor-noticias');
+            if (contenedor.querySelector('.loading')) contenedor.innerHTML = '';
+
+            const periodicoDiv = document.createElement('div');
+            periodicoDiv.className = 'newspaper';
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'newspaper-header';
+
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'newspaper-icon';
+            iconDiv.style.backgroundColor = newspaperColors[periodicoKey];
+            iconDiv.textContent = newspaperInitials[periodicoKey];
+
+            const titleH2 = document.createElement('h2');
+            titleH2.className = 'newspaper-title';
+            titleH2.textContent = newspaperNames[periodicoKey];
+
+            headerDiv.appendChild(iconDiv);
+            headerDiv.appendChild(titleH2);
+
+            const errorDiv = document.createElement('div');
+            errorDiv.style.padding = '15px';
+            errorDiv.style.color = '#d32f2f';
+            errorDiv.innerHTML = `<strong>Error al cargar noticias:</strong> ${mensaje}`;
+
+            periodicoDiv.appendChild(headerDiv);
+            periodicoDiv.appendChild(errorDiv);
+
+            contenedor.appendChild(periodicoDiv);
+        }
+
+        // ----------- SOLUCIÓN LECTURA POR VOZ -----------
+        let vozEspanol = null;
+
+        // Cargar voces en español de manera robusta
+        function obtenerVozEspanol(callback) {
+            let voces = speechSynthesis.getVoices();
+            let voz = voces.find(v => v.lang.startsWith('es'));
+            if (voz) {
+                callback(voz);
+            } else {
+                // Si no hay voces, esperar al evento voiceschanged
+                window.speechSynthesis.onvoiceschanged = function() {
+                    voces = speechSynthesis.getVoices();
+                    voz = voces.find(v => v.lang.startsWith('es'));
+                    callback(voz || null);
+                };
+            }
+        }
+
+        function leerNoticias() {
+            if (noticiasCargadas.length === 0) {
+                alert('No hay noticias cargadas. Por favor, recargue primero las noticias.');
+                return;
+            }
+            if (!('speechSynthesis' in window)) {
+                alert('Lo siento, tu navegador no soporta la función de lectura por voz.');
+                return;
+            }
+
+            window.speechSynthesis.cancel();
+
+            let textoCompleto = "Resumen de las últimas noticias. ";
+            noticiasCargadas.forEach(noticia => {
+                textoCompleto += `Del periódico ${noticia.periodico}. ${noticia.titulo}. Publicada el ${noticia.fecha}. `;
+            });
+
+            obtenerVozEspanol(function(voz){
+                const utterance = new SpeechSynthesisUtterance(textoCompleto);
+                if (voz) utterance.voice = voz;
+                utterance.lang = 'es-ES';
+                utterance.rate = 0.9;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                utterance.onend = function() {
+                    document.getElementById('status').textContent = 'Lectura finalizada.';
+                };
+                window.speechSynthesis.speak(utterance);
+                document.getElementById('status').textContent = 'Leyendo noticias...';
+            });
+        }
+
+        function detenerLectura() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                document.getElementById('status').textContent = 'Lectura detenida.';
+            }
+        }
+    </script>
+</body>
+</html>
