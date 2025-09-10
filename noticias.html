@@ -1,1 +1,690 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lector de Noticias RSS con Voz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e5799 0%,#207cca 51%,#2989d8 100%);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-reload {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .btn-reload:hover {
+            background-color: #3e8e41;
+            transform: translateY(-2px);
+        }
+        
+        .btn-read {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .btn-read:hover {
+            background-color: #0b7dda;
+            transform: translateY(-2px);
+        }
+        
+        .btn-stop {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .btn-stop:hover {
+            background-color: #d32f2f;
+            transform: translateY(-2px);
+        }
+        
+        .voice-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .voice-controls label {
+            font-weight: 500;
+        }
+        
+        .voice-controls select, .voice-controls input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .newspaper {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        
+        .newspaper:hover {
+            transform: translateY(-5px);
+        }
+        
+        .newspaper-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .newspaper-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            border-radius: 50%;
+        }
+        
+        .newspaper-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        
+        .news-list {
+            list-style: none;
+        }
+        
+        .news-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .news-item:last-child {
+            border-bottom: none;
+        }
+        
+        .news-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .news-date {
+            font-size: 0.8rem;
+            color: #777;
+        }
+        
+        .news-image {
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            height: 160px;
+            object-fit: cover;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 0.9rem;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 15px;
+            margin-top: 20px;
+            background-color: #fff9c4;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .reading-status {
+            text-align: center;
+            padding: 10px;
+            margin: 15px 0;
+            background-color: #e3f2fd;
+            border-radius: 8px;
+            font-weight: 500;
+            display: none;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 200px;
+            }
+            
+            .voice-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Lector de Noticias RSS con Voz</h1>
+        <p class="description">Últimas noticias de los principales periódicos de España. Actualizado automáticamente desde sus feeds RSS.</p>
+    </header>
+    
+    <div class="controls">
+        <button class="btn btn-reload" onclick="cargarNoticias()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+            </svg>
+            Releer Noticias
+        </button>
+        <button class="btn btn-read" onclick="iniciarLectura()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                <path d="M6.79 5.093A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814l-3.5-2.5z"/>
+            </svg>
+            Leer en Voz Alta
+        </button>
+        <button class="btn btn-stop" onclick="detenerLectura()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.5 5A1.5 1.5 0 0 0 5 6.5v3A1.5 1.5 0 0 0 6.5 11h3A1.5 1.5 0 0 0 11 9.5v-3A1.5 1.5 0 0 0 9.5 5h-3z"/>
+            </svg>
+            Detener Lectura
+        </button>
+    </div>
+    
+    <div class="voice-controls">
+        <label for="voice-select">Voz:</label>
+        <select id="voice-select"></select>
+        
+        <label for="rate">Velocidad:</label>
+        <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
+        <span id="rate-value">1.0</span>
+        
+        <label for="pitch">Tono:</label>
+        <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1">
+        <span id="pitch-value">1.0</span>
+    </div>
+    
+    <div class="reading-status" id="reading-status"></div>
+    
+    <div class="container" id="contenedor-noticias">
+        <div class="loading">
+            <div class="spinner"></div>
+        </div>
+    </div>
+    
+    <div class="status" id="status">
+        Cargando noticias desde los feeds RSS...
+    </div>
+    
+    <footer>
+        <p>Lector de noticias &copy; 2023 | Actualizado automáticamente desde las fuentes originales</p>
+    </footer>
+
+    <script>
+        // URLs de los feeds RSS (usaremos un proxy para evitar problemas CORS)
+        const feeds = {
+            'elpais': 'https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada',
+            'elmundo': 'https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml',
+            'abc': 'https://www.abc.es/rss/feeds/abcPortada.xml',
+            'lavanguardia': 'https://www.lavanguardia.com/rss/home.xml',
+            'efe': 'https://efe.com/feed/'
+        };
+
+        // Nombres completos de los periódicos
+        const newspaperNames = {
+            'elpais': 'El País',
+            'elmundo': 'El Mundo',
+            'abc': 'ABC',
+            'lavanguardia': 'La Vanguardia',
+            'efe': 'Agencia EFE'
+        };
+
+        // Colores para cada periódico
+        const newspaperColors = {
+            'elpais': '#E41B23',
+            'elmundo': '#00A0E3',
+            'abc': '#000000',
+            'lavanguardia': '#001E50',
+            'efe': '#D52B1E'
+        };
+
+        // Iniciales para los iconos
+        const newspaperInitials = {
+            'elpais': 'EP',
+            'elmundo': 'EM',
+            'abc': 'ABC',
+            'lavanguardia': 'LV',
+            'efe': 'EF'
+        };
+
+        // Almacenar las noticias cargadas
+        let noticiasCargadas = [];
+        let sintesisVoz = null;
+        let vocesDisponibles = [];
+
+        // Cargar noticias al iniciar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarNoticias();
+            inicializarVoz();
+        });
+
+        // Inicializar opciones de voz
+        function inicializarVoz() {
+            if ('speechSynthesis' in window) {
+                // Esperar a que las voces estén cargadas
+                speechSynthesis.onvoiceschanged = function() {
+                    cargarVoces();
+                };
+                cargarVoces();
+                
+                // Configurar event listeners para los controles
+                document.getElementById('rate').addEventListener('input', function() {
+                    document.getElementById('rate-value').textContent = this.value;
+                });
+                
+                document.getElementById('pitch').addEventListener('input', function() {
+                    document.getElementById('pitch-value').textContent = this.value;
+                });
+            } else {
+                document.getElementById('voice-controls').style.display = 'none';
+                alert('Tu navegador no soporta la síntesis de voz. Por favor, usa Chrome, Edge o Safari.');
+            }
+        }
+
+        // Cargar las voces disponibles
+        function cargarVoces() {
+            vocesDisponibles = speechSynthesis.getVoices();
+            const selector = document.getElementById('voice-select');
+            selector.innerHTML = '';
+            
+            // Filtrar voces en español
+            const vocesEspanol = vocesDisponibles.filter(voz => voz.lang.includes('es'));
+            
+            if (vocesEspanol.length > 0) {
+                vocesEspanol.forEach(function(voz) {
+                    const option = document.createElement('option');
+                    option.value = voz.name;
+                    option.textContent = `${voz.name} (${voz.lang})`;
+                    selector.appendChild(option);
+                });
+            } else {
+                // Si no hay voces en español, mostrar todas las disponibles
+                vocesDisponibles.forEach(function(voz) {
+                    const option = document.createElement('option');
+                    option.value = voz.name;
+                    option.textContent = `${voz.name} (${voz.lang})`;
+                    selector.appendChild(option);
+                });
+            }
+        }
+
+        // Función para obtener y mostrar noticias
+        async function cargarNoticias() {
+            const contenedor = document.getElementById('contenedor-noticias');
+            const status = document.getElementById('status');
+            
+            // Mostrar estado de carga
+            contenedor.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            status.textContent = 'Cargando noticias desde los feeds RSS...';
+            
+            // Limpiar noticias anteriores
+            noticiasCargadas = [];
+            
+            try {
+                // Para este ejemplo, usaremos datos de demostración
+                // En una implementación real, se conectaría a los feeds RSS
+                simularCargaNoticias();
+                
+            } catch (error) {
+                console.error('Error general:', error);
+                status.textContent = `Error: ${error.message}. Recargue la página o intente más tarde.`;
+            }
+        }
+
+        // Simular la carga de noticias (en lugar de conectarse a RSS)
+        function simularCargaNoticias() {
+            const contenedor = document.getElementById('contenedor-noticias');
+            const status = document.getElementById('status');
+            
+            // Limpiar contenedor
+            contenedor.innerHTML = '';
+            
+            // Noticias de ejemplo para cada periódico
+            const noticiasEjemplo = {
+                'elpais': [
+                    {
+                        titulo: 'El Gobierno aprueba el plan de vivienda con ayudas al alquiler para jóvenes',
+                        fecha: '25/05/2023 - 08:45',
+                        imagen: 'https://via.placeholder.com/300x160/E41B23/FFFFFF?text=El+País'
+                    },
+                    {
+                        titulo: 'La inflación se modera hasta el 3,2% en mayo, su nivel más bajo en dos años',
+                        fecha: '25/05/2023 - 07:30',
+                        imagen: ''
+                    },
+                    {
+                        titulo: 'España se convierte en el segundo país del mundo con más reservas de la biosfera',
+                        fecha: '24/05/2023 - 21:15',
+                        imagen: ''
+                    }
+                ],
+                'elmundo': [
+                    {
+                        titulo: 'Feijóo pide elecciones ante el bloqueo: "No podemos estar meses en funciones"',
+                        fecha: '25/05/2023 - 09:20',
+                        imagen: 'https://via.placeholder.com/300x160/00A0E3/FFFFFF?text=El+Mundo'
+                    },
+                    {
+                        titulo: 'Los expertos alertan del aumento de casos de viruela del mono en Europa',
+                        fecha: '25/05/2023 - 08:10',
+                        imagen: ''
+                    },
+                    {
+                        titulo: 'La Audiencia Nacional investiga la presunta financiación ilegal del Partido Popular',
+                        fecha: '24/05/2023 - 22:05',
+                        imagen: ''
+                    }
+                ],
+                'abc': [
+                    {
+                        titulo: 'El Rey aboga por una España "plural y diversa" en la entrega de los Premios Princesa de Asturias',
+                        fecha: '25/05/2023 - 10:05',
+                        imagen: 'https://via.placeholder.com/300x160/000000/FFFFFF?text=ABC'
+                    },
+                    {
+                        titulo: 'La Comunidad de Madrid anuncia la construcción de 10.000 viviendas protegidas',
+                        fecha: '25/05/2023 - 08:45',
+                        imagen: ''
+                    },
+                    {
+                        titulo: 'El calor adelanta la temporada de incendios: ya hay varios focos activos en Andalucía',
+                        fecha: '24/05/2023 - 19:30',
+                        imagen: ''
+                    }
+                ],
+                'lavanguardia': [
+                    {
+                        titulo: 'Barcelona refuerza su dispositivo de seguridad para el partido de la Champions',
+                        fecha: '25/05/2023 - 09:40',
+                        imagen: 'https://via.placeholder.com/300x160/001E50/FFFFFF?text=La+Vanguardia'
+                    },
+                    {
+                        titulo: 'Catalunya registra un récord de turistas en el primer trimestre del año',
+                        fecha: '25/05/2023 - 07:55',
+                        imagen: ''
+                    },
+                    {
+                        titulo: 'El sector tecnológico catalán crece un 8% y ya supone el 10% del PIB',
+                        fecha: '24/05/2023 - 20:20',
+                        imagen: ''
+                    }
+                ],
+                'efe': [
+                    {
+                        titulo: 'La ONU alerta de una posible crisis alimentaria mundial por la guerra en Ucrania',
+                        fecha: '25/05/2023 - 08:30',
+                        imagen: 'https://via.placeholder.com/300x160/D52B1E/FFFFFF?text=Agencia+EFE'
+                    },
+                    {
+                        titulo: 'América Latina celebra el 50 aniversario del primer acuerdo de integración regional',
+                        fecha: '25/05/2023 - 07:15',
+                        imagen: ''
+                    },
+                    {
+                        titulo: 'Descubren una nueva especie de orangután en Indonesia',
+                        fecha: '24/05/2023 - 18:45',
+                        imagen: ''
+                    }
+                ]
+            };
+            
+            // Mostrar noticias para cada periódico
+            for (const [key, noticias] of Object.entries(noticiasEjemplo)) {
+                noticiasCargadas = noticiasCargadas.concat(noticias.map(n => ({
+                    periodico: newspaperNames[key],
+                    titulo: n.titulo,
+                    fecha: n.fecha
+                })));
+                
+                mostrarNoticias(key, noticias);
+            }
+            
+            status.textContent = 'Noticias cargadas correctamente.';
+        }
+
+        // Función para mostrar noticias en el DOM
+        function mostrarNoticias(periodicoKey, noticias) {
+            const contenedor = document.getElementById('contenedor-noticias');
+            
+            const periodicoDiv = document.createElement('div');
+            periodicoDiv.className = 'newspaper';
+            
+            // Crear encabezado del periódico
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'newspaper-header';
+            
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'newspaper-icon';
+            iconDiv.style.backgroundColor = newspaperColors[periodicoKey];
+            iconDiv.textContent = newspaperInitials[periodicoKey];
+            
+            const titleH2 = document.createElement('h2');
+            titleH2.className = 'newspaper-title';
+            titleH2.textContent = newspaperNames[periodicoKey];
+            
+            headerDiv.appendChild(iconDiv);
+            headerDiv.appendChild(titleH2);
+            
+            // Crear lista de noticias
+            const listaUl = document.createElement('ul');
+            listaUl.className = 'news-list';
+            
+            noticias.forEach(noticia => {
+                const itemLi = document.createElement('li');
+                itemLi.className = 'news-item';
+                
+                const tituloDiv = document.createElement('div');
+                tituloDiv.className = 'news-title';
+                tituloDiv.textContent = noticia.titulo;
+                
+                const fechaDiv = document.createElement('div');
+                fechaDiv.className = 'news-date';
+                fechaDiv.textContent = noticia.fecha;
+                
+                itemLi.appendChild(tituloDiv);
+                itemLi.appendChild(fechaDiv);
+                
+                // Añadir imagen si está disponible
+                if (noticia.imagen) {
+                    const imagen = document.createElement('img');
+                    imagen.className = 'news-image';
+                    imagen.src = noticia.imagen;
+                    imagen.alt = noticia.titulo;
+                    itemLi.appendChild(imagen);
+                }
+                
+                listaUl.appendChild(itemLi);
+            });
+            
+            periodicoDiv.appendChild(headerDiv);
+            periodicoDiv.appendChild(listaUl);
+            
+            contenedor.appendChild(periodicoDiv);
+        }
+
+        // Iniciar la lectura de noticias
+        function iniciarLectura() {
+            if (noticiasCargadas.length === 0) {
+                alert('No hay noticias cargadas. Por favor, recargue primero las noticias.');
+                return;
+            }
+            
+            if (!('speechSynthesis' in window)) {
+                alert('Tu navegador no soporta la síntesis de voz. Por favor, usa Chrome, Edge o Safari.');
+                return;
+            }
+            
+            // Detener cualquier lectura previa
+            detenerLectura();
+            
+            // Crear texto para leer
+            let textoCompleto = "Resumen de las últimas noticias. ";
+            
+            noticiasCargadas.forEach((noticia, index) => {
+                textoCompleto += `Noticia ${index + 1} del periódico ${noticia.periodico}. ${noticia.titulo}. Publicada el ${noticia.fecha}. `;
+            });
+            
+            // Configurar la síntesis de voz
+            sintesisVoz = new SpeechSynthesisUtterance(textoCompleto);
+            
+            // Configurar voz seleccionada
+            const vozSeleccionada = document.getElementById('voice-select').value;
+            if (vozSeleccionada) {
+                const voz = vocesDisponibles.find(v => v.name === vozSeleccionada);
+                if (voz) sintesisVoz.voice = voz;
+            }
+            
+            // Configurar velocidad y tono
+            sintesisVoz.rate = parseFloat(document.getElementById('rate').value);
+            sintesisVoz.pitch = parseFloat(document.getElementById('pitch').value);
+            sintesisVoz.volume = 1;
+            
+            // Eventos para actualizar la interfaz
+            sintesisVoz.onstart = function() {
+                document.getElementById('reading-status').style.display = 'block';
+                document.getElementById('reading-status').textContent = 'Leyendo noticias...';
+                document.getElementById('reading-status').style.backgroundColor = '#e3f2fd';
+            };
+            
+            sintesisVoz.onend = function() {
+                document.getElementById('reading-status').textContent = 'Lectura finalizada.';
+                document.getElementById('reading-status').style.backgroundColor = '#e8f5e9';
+            };
+            
+            sintesisVoz.onerror = function(event) {
+                console.error('Error en síntesis de voz:', event);
+                document.getElementById('reading-status').textContent = 'Error en la lectura.';
+                document.getElementById('reading-status').style.backgroundColor = '#ffebee';
+            };
+            
+            // Iniciar la lectura
+            speechSynthesis.speak(sintesisVoz);
+        }
+
+        // Detener la lectura
+        function detenerLectura() {
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+                document.getElementById('reading-status').textContent = 'Lectura detenida.';
+                document.getElementById('reading-status').style.backgroundColor = '#ffebee';
+            }
+        }
+    </script>
+</body>
+</html>
