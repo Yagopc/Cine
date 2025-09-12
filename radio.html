@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Radio España</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .timer-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+            gap: 10px;
+        }
+        
+        .timer-btn {
+            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .timer-input {
+            width: 60px;
+            padding: 8px;
+            border-radius: 20px;
+            border: none;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .timer-display {
+            font-size: 0.9rem;
+            margin-top: 5px;
+            min-height: 20px;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+        
+        .radio-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 140px;
+        }
+        
+        .radio-name {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .player-button {
+            padding: 10px 5px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .stopped {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .playing {
+            background-color: #2ecc71;
+            color: black;
+        }
+        
+        .status {
+            font-size: 0.75rem;
+            margin-top: 8px;
+            min-height: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .now-playing {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .now-playing h2 {
+            font-size: 1.1rem;
+        }
+        
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.75rem;
+            opacity: 0.7;
+            padding: 10px;
+        }
+        
+        /* Modal para el temporizador */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: #2c3e50;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            width: 80%;
+            max-width: 300px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .confirm {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .cancel {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        /* Responsive */
+        @media (max-width: 400px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .radio-card {
+                min-height: 120px;
+            }
+        }
+        
+        @media (min-width: 500px) {
+            .container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Radio España</h1>
+        <div class="timer-container">
+            <button id="timerBtn" class="timer-btn">Temporizador</button>
+            <input type="number" id="timerInput" class="timer-input" placeholder="Min" min="1" max="120">
+        </div>
+        <div id="timerDisplay" class="timer-display"></div>
+    </header>
+    
+    <div class="container">
+        <!-- Cadena SER -->
+        <div class="radio-card">
+            <div class="radio-name">Cadena SER</div>
+            <button id="serButton" class="player-button stopped">PLAY</button>
+            <div id="serStatus" class="status"></div>
+        </div>
+        
+        <!-- COPE -->
+        <div class="radio-card">
+            <div class="radio-name">COPE</div>
+            <button id="copeButton" class="player-button stopped">PLAY</button>
+            <div id="copeStatus" class="status"></div>
+        </div>
+        
+        <!-- Onda Cero -->
+        <div class="radio-card">
+            <div class="radio-name">Onda Cero</div>
+            <button id="ondaCeroButton" class="player-button stopped">PLAY</button>
+            <div id="ondaCeroStatus" class="status"></div>
+        </div>
+        
+        <!-- RNE -->
+        <div class="radio-card">
+            <div class="radio-name">RNE</div>
+            <button id="rneButton" class="player-button stopped">PLAY</button>
+            <div id="rneStatus" class="status"></div>
+        </div>
+        
+        <!-- esRadio -->
+        <div class="radio-card">
+            <div class="radio-name">esRadio</div>
+            <button id="esRadioButton" class="player-button stopped">PLAY</button>
+            <div id="esRadioStatus" class="status"></div>
+        </div>
+    </div>
+    
+    <div class="now-playing">
+        <h2 id="nowPlayingText">No se está reproduciendo ninguna emisora</h2>
+    </div>
+    
+    <footer>
+        <p>Radio España - Disfruta de tu programación favorita</p>
+    </footer>
+
+    <!-- Modal de temporizador -->
+    <div id="timerModal" class="modal">
+        <div class="modal-content">
+            <h2>Configurar Temporizador</h2>
+            <p>¿Apagar la radio después de <span id="modalMinutes">0</span> minutos?</p>
+            <div class="modal-buttons">
+                <button id="confirmTimer" class="modal-btn confirm">Aceptar</button>
+                <button id="cancelTimerBtn" class="modal-btn cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de emisoras
+        const stations = [
+            {
+                id: 'ser',
+                name: 'Cadena SER',
+                url: 'https://28933.live.streamtheworld.com/CADENASER.mp3',
+                button: document.getElementById('serButton'),
+                status: document.getElementById('serStatus'),
+                playing: false
+            },
+            {
+                id: 'cope',
+                name: 'COPE',
+                url: 'https://flucast09-h-cloud.flumotion.com/cope/net1.mp3',
+                button: document.getElementById('copeButton'),
+                status: document.getElementById('copeStatus'),
+                playing: false
+            },
+            {
+                id: 'ondaCero',
+                name: 'Onda Cero',
+                url: 'https://atres-live.ondacero.es/live/ondacero/master.m3u8',
+                button: document.getElementById('ondaCeroButton'),
+                status: document.getElementById('ondaCeroStatus'),
+                playing: false
+            },
+            {
+                id: 'rne',
+                name: 'Radio Nacional de España',
+                url: 'https://rtvelivestream.rtve.es/rtvesec/rne/rne_r1_main.m3u8',
+                button: document.getElementById('rneButton'),
+                status: document.getElementById('rneStatus'),
+                playing: false
+            },
+            {
+                id: 'esRadio',
+                name: 'esRadio',
+                url: 'https://libertaddigital-radio-live1.flumotion.com/libertaddigital/ld-live1-high.mp3',
+                button: document.getElementById('esRadioButton'),
+                status: document.getElementById('esRadioStatus'),
+                playing: false
+            }
+        ];
+        
+        let audio = null;
+        let currentStation = null;
+        let timerInterval = null;
+        let timerEndTime = null;
+        const nowPlayingText = document.getElementById('nowPlayingText');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const timerInput = document.getElementById('timerInput');
+        const timerBtn = document.getElementById('timerBtn');
+        const timerModal = document.getElementById('timerModal');
+        const modalMinutes = document.getElementById('modalMinutes');
+        const confirmTimer = document.getElementById('confirmTimer');
+        const cancelTimerBtn = document.getElementById('cancelTimerBtn');
+        
+        // Función para detener la reproducción actual
+        function stopPlayback() {
+            if (audio) {
+                audio.pause();
+                audio = null;
+            }
+            
+            if (currentStation) {
+                currentStation.playing = false;
+                currentStation.button.classList.remove('playing');
+                currentStation.button.classList.add('stopped');
+                currentStation.status.textContent = '';
+                currentStation = null;
+            }
+            
+            nowPlayingText.textContent = 'No se está reproduciendo ninguna emisora';
+        }
+        
+        // Función para iniciar la reproducción de una emisora
+        function startPlayback(station) {
+            // Detener cualquier reproducción actual
+            stopPlayback();
+            
+            // Iniciar nueva reproducción
+            audio = new Audio(station.url);
+            audio.play()
+                .then(() => {
+                    station.playing = true;
+                    station.button.classList.remove('stopped');
+                    station.button.classList.add('playing');
+                    station.status.textContent = 'Reproduciendo...';
+                    currentStation = station;
+                    nowPlayingText.textContent = `Escuchando: ${station.name}`;
+                })
+                .catch(error => {
+                    console.error("Error al reproducir:", error);
+                    station.status.textContent = "Error al conectar";
+                });
+        }
+        
+        // Configurar event listeners para cada botón
+        stations.forEach(station => {
+            station.button.addEventListener('click', () => {
+                if (station.playing) {
+                    // Si ya se está reproduciendo, detener
+                    stopPlayback();
+                } else {
+                    // Si no se está reproduciendo, iniciar
+                    startPlayback(station);
+                }
+            });
+        });
+        
+        // Temporizador functions
+        function showTimerModal() {
+            const minutes = parseInt(timerInput.value) || 0;
+            if (minutes < 1 || minutes > 120) {
+                alert("Por favor, introduce un valor entre 1 y 120 minutos.");
+                return;
+            }
+            
+            modalMinutes.textContent = minutes;
+            timerModal.style.display = 'flex';
+        }
+        
+        function setTimer() {
+            const minutes = parseInt(timerInput.value) || 0;
+            if (minutes < 1) return;
+            
+            // Clear existing timer
+            clearInterval(timerInterval);
+            
+            // Set new timer
+            timerEndTime = new Date().getTime() + (minutes * 60 * 1000);
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(() => {
+                const now = new Date().getTime();
+                if (now >= timerEndTime) {
+                    stopPlayback();
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "Temporizador completado";
+                    setTimeout(() => {
+                        timerDisplay.textContent = "";
+                    }, 3000);
+                } else {
+                    updateTimerDisplay();
+                }
+            }, 1000);
+            
+            timerModal.style.display = 'none';
+        }
+        
+        function updateTimerDisplay() {
+            const now = new Date().getTime();
+            const distance = timerEndTime - now;
+            
+            if (distance < 0) {
+                timerDisplay.textContent = "Temporizador completado";
+                return;
+            }
+            
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            timerDisplay.textContent = `Apagado en: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+        
+        function hideTimerModal() {
+            clearInterval(timerInterval);
+            timerDisplay.textContent = "";
+            timerModal.style.display = 'none';
+        }
+        
+        // Event listeners for timer
+        timerBtn.addEventListener('click', showTimerModal);
+        confirmTimer.addEventListener('click', setTimer);
+        cancelTimerBtn.addEventListener('click', hideTimerModal);
+        
+        // Cerrar modal si se hace clic fuera del contenido
+        window.addEventListener('click', (event) => {
+            if (event.target === timerModal) {
+                hideTimerModal();
+            }
+        });
+    </script>
+</body>
+</html>
