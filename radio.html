@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor de Emisoras de Radio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        
+        .radio-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .radio-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .radio-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .radio-name {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .player-button {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stopped {
+            background-color: #e74c3c; /* Rojo */
+            color: white;
+        }
+        
+        .playing {
+            background-color: #2ecc71; /* Verde */
+            color: black;
+        }
+        
+        .status {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            min-height: 20px;
+        }
+        
+        .now-playing {
+            margin-top: 30px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Reproductor de Emisoras</h1>
+        <p class="subtitle">Selecciona una emisora para comenzar a escuchar</p>
+    </header>
+    
+    <div class="container">
+        <!-- Cadena SER -->
+        <div class="radio-card">
+            <div class="radio-logo">SER</div>
+            <div class="radio-name">Cadena SER</div>
+            <button id="serButton" class="player-button stopped">PLAY</button>
+            <div id="serStatus" class="status"></div>
+        </div>
+        
+        <!-- COPE -->
+        <div class="radio-card">
+            <div class="radio-logo">CO</div>
+            <div class="radio-name">COPE</div>
+            <button id="copeButton" class="player-button stopped">PLAY</button>
+            <div id="copeStatus" class="status"></div>
+        </div>
+        
+        <!-- Onda Cero -->
+        <div class="radio-card">
+            <div class="radio-logo">OC</div>
+            <div class="radio-name">Onda Cero</div>
+            <button id="ondaCeroButton" class="player-button stopped">PLAY</button>
+            <div id="ondaCeroStatus" class="status"></div>
+        </div>
+        
+        <!-- RNE -->
+        <div class="radio-card">
+            <div class="radio-logo">RNE</div>
+            <div class="radio-name">Radio Nacional</div>
+            <button id="rneButton" class="player-button stopped">PLAY</button>
+            <div id="rneStatus" class="status"></div>
+        </div>
+        
+        <!-- esRadio -->
+        <div class="radio-card">
+            <div class="radio-logo">es</div>
+            <div class="radio-name">esRadio</div>
+            <button id="esRadioButton" class="player-button stopped">PLAY</button>
+            <div id="esRadioStatus" class="status"></div>
+        </div>
+    </div>
+    
+    <div class="now-playing">
+        <h2 id="nowPlayingText">No se está reproduciendo ninguna emisora</h2>
+    </div>
+    
+    <footer>
+        <p>Reproductor de emisoras de radio | Diseñado para disfrutar de la mejor programación</p>
+    </footer>
+
+    <script>
+        // Configuración de emisoras
+        const stations = [
+            {
+                id: 'ser',
+                name: 'Cadena SER',
+                url: 'https://28933.live.streamtheworld.com/CADENASER.mp3',
+                button: document.getElementById('serButton'),
+                status: document.getElementById('serStatus'),
+                playing: false
+            },
+            {
+                id: 'cope',
+                name: 'COPE',
+                url: 'https://flucast09-h-cloud.flumotion.com/cope/net1.mp3',
+                button: document.getElementById('copeButton'),
+                status: document.getElementById('copeStatus'),
+                playing: false
+            },
+            {
+                id: 'ondaCero',
+                name: 'Onda Cero',
+                url: 'https://atres-live.ondacero.es/live/ondacero/master.m3u8',
+                button: document.getElementById('ondaCeroButton'),
+                status: document.getElementById('ondaCeroStatus'),
+                playing: false
+            },
+            {
+                id: 'rne',
+                name: 'Radio Nacional de España',
+                url: 'https://rtvelivestream.rtve.es/rtvesec/rne/rne_r1_main.m3u8',
+                button: document.getElementById('rneButton'),
+                status: document.getElementById('rneStatus'),
+                playing: false
+            },
+            {
+                id: 'esRadio',
+                name: 'esRadio',
+                url: 'https://libertaddigital-radio-live1.flumotion.com/libertaddigital/ld-live1-high.mp3',
+                button: document.getElementById('esRadioButton'),
+                status: document.getElementById('esRadioStatus'),
+                playing: false
+            }
+        ];
+        
+        let audio = null;
+        let currentStation = null;
+        const nowPlayingText = document.getElementById('nowPlayingText');
+        
+        // Función para detener la reproducción actual
+        function stopPlayback() {
+            if (audio) {
+                audio.pause();
+                audio = null;
+            }
+            
+            if (currentStation) {
+                currentStation.playing = false;
+                currentStation.button.classList.remove('playing');
+                currentStation.button.classList.add('stopped');
+                currentStation.status.textContent = '';
+                currentStation = null;
+            }
+            
+            nowPlayingText.textContent = 'No se está reproduciendo ninguna emisora';
+        }
+        
+        // Función para iniciar la reproducción de una emisora
+        function startPlayback(station) {
+            // Detener cualquier reproducción actual
+            stopPlayback();
+            
+            // Iniciar nueva reproducción
+            audio = new Audio(station.url);
+            audio.play()
+                .then(() => {
+                    station.playing = true;
+                    station.button.classList.remove('stopped');
+                    station.button.classList.add('playing');
+                    station.status.textContent = 'Reproduciendo...';
+                    currentStation = station;
+                    nowPlayingText.textContent = `Escuchando: ${station.name}`;
+                })
+                .catch(error => {
+                    console.error("Error al reproducir:", error);
+                    station.status.textContent = "Error al conectar";
+                });
+        }
+        
+        // Configurar event listeners para cada botón
+        stations.forEach(station => {
+            station.button.addEventListener('click', () => {
+                if (station.playing) {
+                    // Si ya se está reproduciendo, detener
+                    stopPlayback();
+                } else {
+                    // Si no se está reproduciendo, iniciar
+                    startPlayback(station);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
