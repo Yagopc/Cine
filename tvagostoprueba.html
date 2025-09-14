@@ -1544,33 +1544,32 @@ function filterInvalidChannels(channels) {
         toggleInterface();
     }
     function playNextChannel() {
-    	updateTvChannelNumber() ;
-        const filteredChannels = getCurrentFilteredChannels();
-        if (filteredChannels.length === 0) return;
-        if (currentChannelIndex >= filteredChannels.length - 1) {
-            currentChannelIndex = 0;
-        } else {
-            currentChannelIndex++;
-        }
-        currentSelectedChannel = filteredChannels[currentChannelIndex];
-        playChannel(currentSelectedChannel);
-        updateCurrentFileName();
+    updateTvChannelNumber(); // ← Añadir esta línea
+    const filteredChannels = getCurrentFilteredChannels();
+    if (filteredChannels.length === 0) return;
+    if (currentChannelIndex >= filteredChannels.length - 1) {
+        currentChannelIndex = 0;
+    } else {
+        currentChannelIndex++;
     }
-    
-    
-    function playPreviousChannel() {
-    	updateTvChannelNumber() ;
-        const filteredChannels = getCurrentFilteredChannels();
-        if (filteredChannels.length === 0) return;
-        if (currentChannelIndex <= 0) {
-            currentChannelIndex = filteredChannels.length - 1;
-        } else {
-            currentChannelIndex--;
-        }
-        currentSelectedChannel = filteredChannels[currentChannelIndex];
-        playChannel(currentSelectedChannel);
-        updateCurrentFileName();
+    currentSelectedChannel = filteredChannels[currentChannelIndex];
+    playChannel(currentSelectedChannel);
+    updateCurrentFileName();
+}
+
+function playPreviousChannel() {
+    updateTvChannelNumber(); // ← Añadir esta línea
+    const filteredChannels = getCurrentFilteredChannels();
+    if (filteredChannels.length === 0) return;
+    if (currentChannelIndex <= 0) {
+        currentChannelIndex = filteredChannels.length - 1;
+    } else {
+        currentChannelIndex--;
     }
+    currentSelectedChannel = filteredChannels[currentChannelIndex];
+    playChannel(currentSelectedChannel);
+    updateCurrentFileName();
+}
     function handleFileSelect(e) {
         const file = e.target.files[0];
         if (!file) return;
