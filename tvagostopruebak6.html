@@ -1190,20 +1190,32 @@ function playLastChannel() {
         videoElement.play().catch(e => console.error("Error al reproducir:", e));
     }
     function playDailymotion(url) {
-        isUsingPlatformPlayer = true;
-        platformFrame.style.display = 'block';
-        videoElement.style.display = 'none';
-        let videoId = '';
-        if (url.includes('/video/')) {
-            videoId = url.split('/video/')[1];
-            if (videoId.includes('_')) videoId = videoId.split('_')[0];
-            if (videoId.includes('?')) videoId = videoId.split('?')[0];
-        }
-        if (videoId) {
-            platformFrame.src = `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1`;
-        } else {
-            alert('No se pudo extraer el ID del video de Dailymotion');
-        }
+    isUsingPlatformPlayer = true;
+    platformFrame.style.display = 'block';
+    videoElement.style.display = 'none';
+    let videoId = '';
+    
+    if (url.includes('/video/')) {
+        videoId = url.split('/video/')[1];
+        if (videoId.includes('_')) videoId = videoId.split('_')[0];
+        if (videoId.includes('?')) videoId = videoId.split('?')[0];
+    }
+    
+    if (videoId) {
+        // Parámetros que ayudan a reducir publicidad y mejorar experiencia
+        platformFrame.src = `https://www.dailymotion.com/embed/video/${videoId}?` + 
+            `autoplay=1&` +
+            `queue-autoplay-next=0&` +       // Desactiva autoplay siguiente
+            `queue-enable=0&` +              // Desactiva cola de reproducción
+            `sharing-enable=0&` +            // Desactiva compartir
+            `ui-logo=0&` +                   // Oculta logo
+            `ui-start-screen-info=0&` +      // Oculta info inicial
+            `endscreen-enable=0&` +          // Desactiva pantalla final
+            `mute=0&` +                      // Sin mute por defecto
+            `controls=1`;                    // Muestra controles
+    } else {
+        alert('No se pudo extraer el ID del video de Dailymotion');
+    }
     }
     function playYouTube(url) {
         isUsingPlatformPlayer = true;
