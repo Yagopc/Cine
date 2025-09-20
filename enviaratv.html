@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar al Chromecast desde Portapapeles</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #3e8e41;
+        }
+        #status {
+            margin-top: 15px;
+            color: #333;
+        }
+    </style>
+    <!-- Chromecast SDK -->
+    <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Enviar al Chromecast</h2>
+        <p>Este botón enviará al Chromecast cualquier URL que tengas en el portapapeles</p>
+        <button id="castButton">Enviar al Chromecast</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const castButton = document.getElementById('castButton');
+            const statusDiv = document.getElementById('status');
+            
+            castButton.addEventListener('click', async function() {
+                try {
+                    // Leer el portapapeles
+                    const clipboardText = await navigator.clipboard.readText();
+                    
+                    if (!clipboardText) {
+                        statusDiv.textContent = "El portapapeles está vacío o no contiene texto";
+                        return;
+                    }
+                    
+                    // Verificar si es una URL válida
+                    let url;
+                    try {
+                        url = new URL(clipboardText);
+                    } catch (e) {
+                        statusDiv.textContent = "El portapapeles no contiene una URL válida";
+                        return;
+                    }
+                    
+                    statusDiv.textContent = `Enviando: ${url.href}`;
+                    
+                    // Iniciar el proceso de envío a Chromecast
+                    castToChromecast(url.href, "Contenido desde portapapeles");
+                    
+                } catch (error) {
+                    console.error('Error al leer el portapapeles:', error);
+                    statusDiv.textContent = "Error: No se pudo acceder al portapapeles. Asegúrate de que esta página tenga permiso.";
+                }
+            });
+            
+            function castToChromecast(url, title) {
+                // Verificar soporte de Chromecast
+                if (!window.chrome || !window.chrome.cast || !window.cast) {
+                    statusDiv.textContent = "Chromecast no está disponible en este navegador. Usa Chrome en PC o Android.";
+                    return;
+                }
+                
+                statusDiv.textContent = "Conectando con Chromecast...";
+                
+                // Inicializar el framework Cast
+                const context = window.cast.framework.CastContext.getInstance();
+                context.setOptions({
+                    receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+                    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+                });
+                
+                // Solicitar sesión
+                context.requestSession()
+                    .then(() => {
+                        sendMediaToCast(url, title);
+                    })
+                    .catch((error) => {
+                        statusDiv.textContent = "No se pudo conectar al Chromecast: " + error;
+                    });
+            }
+            
+            function sendMediaToCast(url, title) {
+                const context = window.cast.framework.CastContext.getInstance();
+                const session = context.getCurrentSession();
+                
+                if (!session) {
+                    statusDiv.textContent = "No hay sesión de Chromecast activa.";
+                    return;
+                }
+                
+                // Crear la información del media
+                const mediaInfo = new chrome.cast.media.MediaInfo(url, 'video/mp4');
+                mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+                mediaInfo.metadata.title = title;
+                
+                // Crear la solicitud
+                const request = new chrome.cast.media.LoadRequest(mediaInfo);
+                
+                // Enviar al Chromecast
+                session.loadMedia(request)
+                    .then(() => {
+                        statusDiv.textContent = "¡Contenido enviado correctamente al Chromecast!";
+                    })
+                    .catch((error) => {
+                        statusDiv.textContent = "Error al enviar: " + error;
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
