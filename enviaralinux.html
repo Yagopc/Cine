@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar al PC Linux</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #f0f0f0; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+            max-width: 400px; 
+            width: 100%; 
+            text-align: center; 
+        }
+        button { 
+            background: #007cba; 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            width: 100%; 
+            margin: 15px 0; 
+            font-size: 16px; 
+            font-weight: bold; 
+        }
+        button:hover { 
+            background: #005a87; 
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+        }
+        #status { 
+            margin: 15px 0; 
+            padding: 12px; 
+            border-radius: 8px; 
+            min-height: 20px; 
+            font-size: 14px; 
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📺 Enviar al PC Linux</h2>
+        <p>IP del servidor Linux:</p>
+        <input type="text" id="pcIp" value="192.168.0.11">
+        
+        <button id="sendButton">🚀 Enviar Video al PC</button>
+        
+        <div id="status" class="info">Preparado. Copia una URL de video y pulsa enviar</div>
+    </div>
+
+    <script>
+        document.getElementById('sendButton').addEventListener('click', async function() {
+            const statusDiv = document.getElementById('status');
+            const pcIp = document.getElementById('pcIp').value.trim();
+            
+            // Reset status
+            statusDiv.className = 'info';
+            statusDiv.textContent = "Leyendo portapapeles...";
+            
+            try {
+                // Leer portapapeles
+                const clipboardText = await navigator.clipboard.readText();
+                
+                if (!clipboardText) {
+                    statusDiv.className = 'error';
+                    statusDiv.textContent = "❌ El portapapeles está vacío";
+                    return;
+                }
+                
+                // Verificar si es URL válida
+                if (!clipboardText.startsWith('http')) {
+                    statusDiv.className = 'error';
+                    statusDiv.textContent = "❌ No es una URL válida (debe empezar por http)";
+                    return;
+                }
+                
+                statusDiv.textContent = `Enviando: ${clipboardText.substring(0, 60)}...`;
+                
+                // Enviar al servidor
+                const response = await fetch(`http://${pcIp}:8080/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: clipboardText })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    statusDiv.className = 'success';
+                    statusDiv.textContent = `✅ ¡Éxito! Reproduciendo con ${result.player}`;
+                } else {
+                    statusDiv.className = 'error';
+                    statusDiv.textContent = `❌ Error: ${result.message}`;
+                }
+                
+            } catch (error) {
+                statusDiv.className = 'error';
+                statusDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
