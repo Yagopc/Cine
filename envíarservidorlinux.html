@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Videos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 10px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            background-color: #007cba;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #005a87;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        #videoList {
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+        
+        .video-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        
+        .video-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .video-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .info {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        /* Modal para configurar IP y puerto */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .modal h3 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+        }
+        
+        .server-info {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="server-info" id="serverInfo">Servidor: 192.168.0.11:8080</div>
+    
+    <div class="buttons">
+        <button id="configButton">Configurar IP</button>
+        <button id="loadButton">Cargar M3U</button>
+        <button id="clearButton">Borrar Lista</button>
+    </div>
+    
+    <input type="file" id="fileInput" accept=".m3u,.m3u8">
+    
+    <div id="videoList"></div>
+    
+    <div id="status" class="status info">Lista vacía. Carga un archivo M3U.</div>
+
+    <!-- Modal para configurar IP y puerto -->
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <h3>Configurar Servidor</h3>
+            <input type="text" id="serverIp" class="modal-input" placeholder="IP del servidor" value="192.168.0.11">
+            <input type="text" id="serverPort" class="modal-input" placeholder="Puerto" value="8080">
+            <div class="modal-buttons">
+                <button id="saveConfig" style="background-color: #28a745;">Guardar</button>
+                <button id="cancelConfig" style="background-color: #6c757d;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos del DOM
+        const configButton = document.getElementById('configButton');
+        const loadButton = document.getElementById('loadButton');
+        const clearButton = document.getElementById('clearButton');
+        const fileInput = document.getElementById('fileInput');
+        const videoList = document.getElementById('videoList');
+        const statusDiv = document.getElementById('status');
+        const serverInfo = document.getElementById('serverInfo');
+        
+        // Elementos del modal
+        const configModal = document.getElementById('configModal');
+        const serverIp = document.getElementById('serverIp');
+        const serverPort = document.getElementById('serverPort');
+        const saveConfig = document.getElementById('saveConfig');
+        const cancelConfig = document.getElementById('cancelConfig');
+        
+        // Configuración del servidor
+        let serverConfig = {
+            ip: localStorage.getItem('serverIp') || '192.168.0.11',
+            port: localStorage.getItem('serverPort') || '8080'
+        };
+        
+        // Actualizar información del servidor
+        function updateServerInfo() {
+            serverInfo.textContent = `Servidor: ${serverConfig.ip}:${serverConfig.port}`;
+        }
+        
+        // Cargar lista desde localStorage al iniciar
+        let videos = JSON.parse(localStorage.getItem('videoList')) || [];
+        updateServerInfo();
+        renderVideoList();
+        
+        // Evento para abrir modal de configuración
+        configButton.addEventListener('click', () => {
+            serverIp.value = serverConfig.ip;
+            serverPort.value = serverConfig.port;
+            configModal.style.display = 'flex';
+        });
+        
+        // Evento para guardar configuración
+        saveConfig.addEventListener('click', () => {
+            const newIp = serverIp.value.trim();
+            const newPort = serverPort.value.trim();
+            
+            if (newIp && newPort) {
+                serverConfig.ip = newIp;
+                serverConfig.port = newPort;
+                
+                localStorage.setItem('serverIp', newIp);
+                localStorage.setItem('serverPort', newPort);
+                
+                updateServerInfo();
+                configModal.style.display = 'none';
+                
+                statusDiv.textContent = 'Configuración guardada correctamente';
+                statusDiv.className = 'status success';
+            } else {
+                statusDiv.textContent = 'Por favor, completa ambos campos';
+                statusDiv.className = 'status error';
+            }
+        });
+        
+        // Evento para cancelar configuración
+        cancelConfig.addEventListener('click', () => {
+            configModal.style.display = 'none';
+        });
+        
+        // Cerrar modal al hacer clic fuera del contenido
+        configModal.addEventListener('click', (e) => {
+            if (e.target === configModal) {
+                configModal.style.display = 'none';
+            }
+        });
+        
+        // Evento para cargar archivo M3U
+        loadButton.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const content = e.target.result;
+                    videos = parseM3U(content);
+                    localStorage.setItem('videoList', JSON.stringify(videos));
+                    renderVideoList();
+                    statusDiv.textContent = `Lista cargada: ${videos.length} videos`;
+                    statusDiv.className = 'status success';
+                } catch (error) {
+                    statusDiv.textContent = 'Error al cargar el archivo M3U';
+                    statusDiv.className = 'status error';
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        });
+        
+        // Evento para borrar la lista
+        clearButton.addEventListener('click', () => {
+            videos = [];
+            localStorage.removeItem('videoList');
+            renderVideoList();
+            statusDiv.textContent = 'Lista borrada';
+            statusDiv.className = 'status info';
+        });
+        
+        // Función para parsear archivo M3U
+        function parseM3U(content) {
+            const lines = content.split('\n');
+            const videos = [];
+            let currentTitle = '';
+            let currentUrl = '';
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                if (line.startsWith('#EXTINF:')) {
+                    // Extraer el título (después de la última coma)
+                    const lastCommaIndex = line.lastIndexOf(',');
+                    if (lastCommaIndex !== -1) {
+                        currentTitle = line.substring(lastCommaIndex + 1).trim();
+                    }
+                } else if (line.startsWith('http')) {
+                    currentUrl = line;
+                    
+                    // Solo añadir si tenemos título y URL
+                    if (currentTitle && currentUrl) {
+                        videos.push({
+                            title: currentTitle,
+                            url: currentUrl
+                        });
+                        
+                        // Resetear para el siguiente video
+                        currentTitle = '';
+                        currentUrl = '';
+                    }
+                }
+            }
+            
+            return videos;
+        }
+        
+        // Función para limpiar y normalizar títulos
+        function cleanTitle(title) {
+            // Eliminar caracteres especiales al inicio que no sean letras o números
+            let cleanTitle = title.replace(/^[^a-zA-Z0-9]+/, '');
+            
+            // Limitar a 40 caracteres si es más largo
+            if (cleanTitle.length > 40) {
+                cleanTitle = cleanTitle.substring(0, 40) + '...';
+            }
+            
+            return cleanTitle;
+        }
+        
+        // Función para renderizar la lista de videos
+        function renderVideoList() {
+            videoList.innerHTML = '';
+            
+            if (videos.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'video-item';
+                emptyMsg.textContent = 'No hay videos en la lista';
+                emptyMsg.style.textAlign = 'center';
+                emptyMsg.style.color = '#999';
+                emptyMsg.style.cursor = 'default';
+                videoList.appendChild(emptyMsg);
+                return;
+            }
+            
+            // Ordenar alfabéticamente (case-insensitive)
+            const sortedVideos = [...videos].sort((a, b) => {
+                const titleA = cleanTitle(a.title).toLowerCase();
+                const titleB = cleanTitle(b.title).toLowerCase();
+                return titleA.localeCompare(titleB);
+            });
+            
+            // Crear elementos de la lista
+            sortedVideos.forEach(video => {
+                const item = document.createElement('div');
+                item.className = 'video-item';
+                item.textContent = cleanTitle(video.title);
+                
+                // Tooltip con el título completo
+                item.title = video.title;
+                
+                item.addEventListener('click', () => {
+                    sendToServer(video.url, video.title);
+                });
+                
+                videoList.appendChild(item);
+            });
+        }
+        
+        // Función para enviar video al servidor
+        async function sendToServer(url, title) {
+            const shortTitle = cleanTitle(title);
+            statusDiv.textContent = `Enviando: ${shortTitle}...`;
+            statusDiv.className = 'status info';
+            
+            try {
+                const response = await fetch(`http://${serverConfig.ip}:${serverConfig.port}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    statusDiv.textContent = `✅ Enviado: ${shortTitle} (${result.player})`;
+                    statusDiv.className = 'status success';
+                } else {
+                    statusDiv.textContent = `❌ Error: ${result.message}`;
+                    statusDiv.className = 'status error';
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                statusDiv.className = 'status error';
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
