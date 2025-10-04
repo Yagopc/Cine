@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Videos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 10px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+.video-item.selected {
+    background-color: #28a745 !important; /* Verde */
+    color: black !important;
+    font-weight: bold;
+}
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        #configButton {
+            background-color: #007cba;
+        }
+        
+        #configButton:hover {
+            background-color: #005a87;
+        }
+        
+        #loadButton {
+            background-color: #007cba;
+        }
+        
+        #loadButton:hover {
+            background-color: #005a87;
+        }
+        
+        #clearButton {
+            background-color: #007cba;
+        }
+        
+        #clearButton:hover {
+            background-color: #005a87;
+        }
+        
+        #firetvButton {
+            background-color: #dc3545; /* Rojo por defecto (desconectado) */
+            color: white;
+        }
+        
+        #firetvButton.connected {
+            background-color: #28a745; /* Verde cuando está conectado */
+            color: black;
+        }
+        
+        #firetvButton:hover {
+            opacity: 0.9;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        #videoList {
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+        
+        .video-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        
+        .video-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .video-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .info {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        /* Modal para configurar IP y puerto */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 450px;
+        }
+        
+        .modal h3 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        /* Estilos para el contenedor del filtro */
+.filter-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+#filterInput {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+/* Estilos para el checkbox personalizado */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+}
+
+#filterCheckbox {
+    display: none;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    background: white;
+    border: 2px solid #007cba;
+    border-radius: 3px;
+    margin-right: 8px;
+    position: relative;
+    transition: all 0.3s;
+}
+
+#filterCheckbox:checked + .checkmark {
+    background: #007cba;
+    border-color: #007cba;
+}
+
+#filterCheckbox:checked + .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+        }
+        
+        .server-info {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Controles de Chromecast */
+        .chromecast-controls {
+            display: none;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            background: #2c2c2c;
+            border-radius: 5px;
+        }
+        
+        .chromecast-controls button {
+            padding: 8px 15px;
+            background: #1565c0;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .chromecast-controls button:active {
+            background: #004ba0;
+        }
+        
+        /* Reproductor embebido */
+        #platformFrame {
+            width: 100%;
+            height: 300px;
+            border: none;
+            display: none;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="server-info" id="serverInfo">Servidor: 192.168.0.11:8080</div>
+    
+    <div class="buttons">
+        <button id="configButton">Configurar IP</button>
+        <button id="loadButton">Cargar M3U</button>
+        <button id="clearButton">Borrar Lista</button>
+        <button id="firetvButton">FireTV</button>
+
+</div>
+
+<!-- AÑADIR ESTO JUSTO DESPUÉS DE LOS BOTONES -->
+<div class="filter-container">
+    <input type="text" id="filterInput" placeholder="Filtrar por título...">
+    <label class="checkbox-label">
+        <input type="checkbox" id="filterCheckbox">
+        <span class="checkmark"></span>
+        Activar filtro
+    </label>
+</div>
+    
+    <input type="file" id="fileInput" accept=".m3u,.m3u8,.txt">
+    
+    <!-- Reproductor embebido para plataformas -->
+    <iframe id="platformFrame" allowfullscreen></iframe>
+    
+    <!-- Controles de Chromecast -->
+    <div class="chromecast-controls" id="chromecastControls">
+        <button id="prevCastBtn">Anterior</button>
+        <button id="playCastBtn">Reproducir</button>
+        <button id="nextCastBtn">Siguiente</button>
+    </div>
+    
+    <div id="videoList"></div>
+    
+    <div id="status" class="status info">Lista vacía. Carga un archivo M3U.</div>
+
+    <!-- Modal para configurar IP y puerto -->
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <h3>Configurar Servidor</h3>
+            
+            <div class="server-options">
+                <div class="server-option" id="option1">
+                    <input type="radio" id="serverOption1" name="serverOption" value="192.168.0.11">
+                    <label for="serverOption1">Servidor 1: 192.168.0.11</label>
+                </div>
+                
+                <div class="server-option" id="option2">
+                    <input type="radio" id="serverOption2" name="serverOption" value="192.168.0.16">
+                    <label for="serverOption2">Servidor 2: 192.168.0.16</label>
+                </div>
+                
+                <div class="server-option" id="option3">
+                    <input type="radio" id="serverOption3" name="serverOption" value="custom">
+                    <label for="serverOption3">Servidor personalizado:</label>
+                    <div class="custom-input">
+                        <input type="text" id="customIp" placeholder="IP" value="192.168.0.11">
+                        <input type="text" id="customPort" class="port-input" placeholder="Puerto" value="8080">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button id="saveConfig" style="background-color: #28a745;">Guardar</button>
+                <button id="cancelConfig" style="background-color: #6c757d;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos del DOM
+       
+const filterInput = document.getElementById('filterInput');
+const filterCheckbox = document.getElementById('filterCheckbox');
+        const configButton = document.getElementById('configButton');
+        const loadButton = document.getElementById('loadButton');
+        const clearButton = document.getElementById('clearButton');
+        const firetvButton = document.getElementById('firetvButton');
+        const fileInput = document.getElementById('fileInput');
+        const videoList = document.getElementById('videoList');
+        const statusDiv = document.getElementById('status');
+        const serverInfo = document.getElementById('serverInfo');
+        const platformFrame = document.getElementById('platformFrame');
+        const chromecastControls = document.getElementById('chromecastControls');
+        const prevCastBtn = document.getElementById('prevCastBtn');
+        const playCastBtn = document.getElementById('playCastBtn');
+        const nextCastBtn = document.getElementById('nextCastBtn');
+        
+        // Elementos del modal
+        const configModal = document.getElementById('configModal');
+        const saveConfig = document.getElementById('saveConfig');
+        const cancelConfig = document.getElementById('cancelConfig');
+        
+        // Elementos de las opciones de servidor
+        const serverOption1 = document.getElementById('serverOption1');
+        const serverOption2 = document.getElementById('serverOption2');
+        const serverOption3 = document.getElementById('serverOption3');
+        const customIp = document.getElementById('customIp');
+        const customPort = document.getElementById('customPort');
+        const optionElements = document.querySelectorAll('.server-option');
+        
+        // Configuración del servidor
+        let serverConfig = {
+            ip: localStorage.getItem('serverIp') || '192.168.0.11',
+            port: localStorage.getItem('serverPort') || '8080',
+            selectedOption: localStorage.getItem('selectedOption') || '192.168.0.11'
+        };
+        
+        // Estado de FireTV/Chromecast
+        let isFireTVConnected = false;
+        let currentChannelIndex = -1;
+        let currentSelectedChannel = null;
+        let videos = [];
+        
+        // Cargar lista desde localStorage al iniciar
+        videos = JSON.parse(localStorage.getItem('videoList')) || [];
+        updateServerInfo();
+        renderVideoList();
+        
+        // ===== FUNCIONES DE DETECCIÓN DE PLATAFORMAS (de tu código) =====
+        function getUrlType(url) {
+            if (!url) return 'unknown';
+            if (url.includes('.m3u8')) return 'tv';
+            if (url.includes('.m3u')) return 'tv';
+            if (url.includes('.mp4') || url.includes('.webm') || url.includes('.ogg')) return 'directo';
+            if (url.match(/dailymotion\.com/)) return 'dailymotion';
+            if (url.match(/youtube\.com|youtu\.be/)) return 'youtube';
+            if (url.match(/ok\.ru/)) return 'okru';
+            return 'unknown';
+        }
+        
+        // ===== FUNCIONES DE REPRODUCCIÓN (de tu código) =====
+        function playDailymotion(url) {
+            let videoId = '';
+            if (url.includes('/video/')) {
+                videoId = url.split('/video/')[1];
+                if (videoId.includes('_')) videoId = videoId.split('_')[0];
+                if (videoId.includes('?')) videoId = videoId.split('?')[0];
+            }
+            
+            if (videoId) {
+                platformFrame.src = `https://www.dailymotion.com/embed/video/${videoId}?` + 
+                    `autoplay=1&queue-autoplay-next=0&queue-enable=0&sharing-enable=0&ui-logo=0&ui-start-screen-info=0&endscreen-enable=0&mute=0&controls=1`;
+                platformFrame.style.display = 'block';
+                statusDiv.textContent = `Reproduciendo Dailymotion: ${videoId}`;
+                statusDiv.className = 'status success';
+            } else {
+                statusDiv.textContent = 'Error: No se pudo extraer ID de Dailymotion';
+                statusDiv.className = 'status error';
+            }
+        }
+        
+        function playYouTube(url) {
+    let videoId = '';
+    if (url.includes('v=')) {
+        videoId = url.split('v=')[1];
+        if (videoId.includes('&')) videoId = videoId.split('&')[0];
+    } else if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1];
+        if (videoId.includes('?')) videoId = videoId.split('?')[0];
+    }
+    
+    if (videoId) {
+        // URL CORREGIDA con parámetros necesarios
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?` +
+            `autoplay=1&playsinline=1&enablejsapi=1&origin=${window.location.origin}` +
+            `&rel=0&modestbranding=1&fs=1`;
+        
+        platformFrame.src = embedUrl;
+        platformFrame.style.display = 'block';
+        statusDiv.textContent = `Reproduciendo YouTube: ${videoId}`;
+        statusDiv.className = 'status success';
+    } else {
+        statusDiv.textContent = 'Error: No se pudo extraer ID de YouTube';
+        statusDiv.className = 'status error';
+    }
+}
+        
+        function playOkRu(url) {
+            let videoId = '';
+            if (url.includes('/video/')) {
+                videoId = url.split('/video/')[1].split(/[/?&#]/)[0];
+            } else if (url.match(/ok\.ru\/videoembed\//)) {
+                videoId = url.split('/videoembed/')[1].split(/[/?&#]/)[0];
+            }
+            
+            if (videoId) {
+                platformFrame.src = `https://ok.ru/videoembed/${videoId}`;
+                platformFrame.style.display = 'block';
+                statusDiv.textContent = `Reproduciendo OK.ru: ${videoId}`;
+                statusDiv.className = 'status success';
+            } else {
+                platformFrame.src = url;
+                platformFrame.style.display = 'block';
+                statusDiv.textContent = 'Reproduciendo OK.ru';
+                statusDiv.className = 'status success';
+            }
+        }
+        
+        // ===== FUNCIONALIDAD CHROMECAST MEJORADA =====
+        function detectChromecast() {
+            // Simulación mejorada de detección de Chromecast
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // En un entorno real, aquí se usaría la API de Google Cast
+                    const chromecastDetected = Math.random() > 0.3; // 70% de probabilidad de detección
+                    
+                    if (chromecastDetected && isFireTVConnected) {
+                        statusDiv.textContent = '✅ Chromecast detectado. Listo para enviar.';
+                        statusDiv.className = 'status success';
+                        chromecastControls.style.display = 'flex';
+                        resolve(true);
+                    } else if (isFireTVConnected) {
+                        statusDiv.textContent = '❌ Chromecast no detectado. Reproduciendo localmente.';
+                        statusDiv.className = 'status error';
+                        chromecastControls.style.display = 'none';
+                        resolve(false);
+                    }
+                }, 1500);
+            });
+        }
+        
+        function playOnChromecast(channel) {
+            if (!channel || !channel.url) return;
+            
+            const urlType = getUrlType(channel.url);
+            const shortTitle = cleanTitle(channel.title);
+            
+            statusDiv.textContent = `🔄 Enviando a Chromecast: ${shortTitle}...`;
+            statusDiv.className = 'status info';
+            
+            // Simular envío a Chromecast
+            setTimeout(() => {
+                switch(urlType) {
+                    case 'dailymotion':
+                        playDailymotion(channel.url);
+                        break;
+                    case 'youtube':
+                        playYouTube(channel.url);
+                        break;
+                    case 'okru':
+                        playOkRu(channel.url);
+                        break;
+                    default:
+                        // Para otros tipos, usar iframe genérico
+                        platformFrame.src = channel.url;
+                        platformFrame.style.display = 'block';
+                        statusDiv.textContent = `✅ Enviado a Chromecast: ${shortTitle}`;
+                        statusDiv.className = 'status success';
+                }
+                
+                // Actualizar controles de Chromecast
+                currentSelectedChannel = channel;
+                updateChromecastControls();
+                
+            }, 1000);
+        }
+        
+        function updateChromecastControls() {
+            if (currentSelectedChannel && isFireTVConnected) {
+                chromecastControls.style.display = 'flex';
+            } else {
+                chromecastControls.style.display = 'none';
+            }
+        }
+        
+        function playNextChromecast() {
+            if (videos.length === 0) return;
+            
+            if (currentChannelIndex >= videos.length - 1) {
+                currentChannelIndex = 0;
+            } else {
+                currentChannelIndex++;
+            }
+            
+            currentSelectedChannel = videos[currentChannelIndex];
+            playOnChromecast(currentSelectedChannel);
+        }
+        
+        function playPreviousChromecast() {
+            if (videos.length === 0) return;
+            
+            if (currentChannelIndex <= 0) {
+                currentChannelIndex = videos.length - 1;
+            } else {
+                currentChannelIndex--;
+            }
+            
+            currentSelectedChannel = videos[currentChannelIndex];
+            playOnChromecast(currentSelectedChannel);
+        }
+        
+        // ===== FUNCIONES ORIGINALES ACTUALIZADAS =====
+        function updateServerInfo() {
+            serverInfo.textContent = `Servidor: ${serverConfig.ip}:${serverConfig.port}`;
+        }
+        
+        // Configurar eventos para las opciones de servidor
+        optionElements.forEach(option => {
+            option.addEventListener('click', (e) => {
+                if (e.target.type === 'text') return;
+                
+                optionElements.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                const radio = option.querySelector('input[type="radio"]');
+                radio.checked = true;
+                
+                if (radio.value === 'custom') {
+                    customIp.focus();
+                }
+            });
+        });
+        
+        // Evento para el botón FireTV
+        firetvButton.addEventListener('click', async () => {
+            isFireTVConnected = !isFireTVConnected;
+            
+            if (isFireTVConnected) {
+                firetvButton.classList.add('connected');
+                statusDiv.textContent = 'Buscando Chromecast...';
+                statusDiv.className = 'status info';
+                
+                // Detectar Chromecast
+                await detectChromecast();
+            } else {
+                firetvButton.classList.remove('connected');
+                platformFrame.style.display = 'none';
+                chromecastControls.style.display = 'none';
+                statusDiv.textContent = 'FireTV desconectado. Modo servidor local.';
+                statusDiv.className = 'status info';
+            }
+        });
+        
+                // Eventos de controles Chromecast
+        prevCastBtn.addEventListener('click', playPreviousChromecast);
+        nextCastBtn.addEventListener('click', playNextChromecast);
+        playCastBtn.addEventListener('click', () => {
+            if (currentSelectedChannel) {
+                playOnChromecast(currentSelectedChannel);
+            }
+        });
+        
+        // Resto de eventos del modal (sin cambios)
+        configButton.addEventListener('click', () => {
+            optionElements.forEach(opt => opt.classList.remove('selected'));
+            
+            if (serverConfig.selectedOption === '192.168.0.11') {
+                serverOption1.checked = true;
+                document.getElementById('option1').classList.add('selected');
+            } else if (serverConfig.selectedOption === '192.168.0.16') {
+                serverOption2.checked = true;
+                document.getElementById('option2').classList.add('selected');
+            } else {
+                serverOption3.checked = true;
+                document.getElementById('option3').classList.add('selected');
+                customIp.value = serverConfig.ip;
+                customPort.value = serverConfig.port;
+            }
+            
+            configModal.style.display = 'flex';
+        });
+        
+        saveConfig.addEventListener('click', () => {
+            let selectedIp, selectedPort, selectedOption;
+            
+            if (serverOption1.checked) {
+                selectedIp = '192.168.0.11';
+                selectedPort = '8080';
+                selectedOption = '192.168.0.11';
+            } else if (serverOption2.checked) {
+                selectedIp = '192.168.0.16';
+                selectedPort = '8080';
+                selectedOption = '192.168.0.16';
+            } else if (serverOption3.checked) {
+                selectedIp = customIp.value.trim();
+                selectedPort = customPort.value.trim();
+                selectedOption = 'custom';
+                
+                if (!selectedIp || !selectedPort) {
+                    statusDiv.textContent = 'Por favor, completa ambos campos para la opción personalizada';
+                    statusDiv.className = 'status error';
+                    return;
+                }
+            } else {
+                statusDiv.textContent = 'Por favor, selecciona una opción';
+                statusDiv.className = 'status error';
+                return;
+            }
+            
+            serverConfig.ip = selectedIp;
+            serverConfig.port = selectedPort;
+            serverConfig.selectedOption = selectedOption;
+            
+            localStorage.setItem('serverIp', selectedIp);
+            localStorage.setItem('serverPort', selectedPort);
+            localStorage.setItem('selectedOption', selectedOption);
+            
+            updateServerInfo();
+            configModal.style.display = 'none';
+            
+            statusDiv.textContent = 'Configuración guardada correctamente';
+            statusDiv.className = 'status success';
+        });
+        
+        cancelConfig.addEventListener('click', () => {
+            configModal.style.display = 'none';
+        });
+        
+        configModal.addEventListener('click', (e) => {
+            if (e.target === configModal) {
+                configModal.style.display = 'none';
+            }
+        });
+        
+        // Evento para cargar archivo M3U
+        loadButton.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const content = e.target.result;
+            videos = parseM3U(content);
+            localStorage.setItem('videoList', JSON.stringify(videos));
+            renderVideoList();
+            statusDiv.textContent = `Lista cargada: ${videos.length} videos`;
+            statusDiv.className = 'status success';
+            
+            // === AÑADIR ESTAS 2 LÍNEAS JUSTO AQUÍ ===
+            filterInput.value = ''; // Limpiar filtro
+            filterCheckbox.checked = false; // Desactivar filtro
+            
+        } catch (error) {
+            statusDiv.textContent = 'Error al cargar el archivo M3U';
+            statusDiv.className = 'status error';
+            console.error(error);
+        }
+    };
+    reader.readAsText(file);
+});
+        
+        // Evento para borrar la lista
+        clearButton.addEventListener('click', () => {
+    videos = [];
+    localStorage.removeItem('videoList');
+    renderVideoList();
+    platformFrame.style.display = 'none';
+    chromecastControls.style.display = 'none';
+    statusDiv.textContent = 'Lista borrada';
+    statusDiv.className = 'status info';
+    
+    filterInput.value = ''; // Limpiar filtro
+    filterCheckbox.checked = false; // Desactivar filtro
+});
+        
+        
+        
+        // Eventos para el filtro
+filterInput.addEventListener('input', () => {
+    if (filterCheckbox.checked) {
+        renderVideoList();
+    }
+});
+
+filterCheckbox.addEventListener('change', () => {
+    renderVideoList();
+    
+    // Actualizar estado del filtro
+    if (filterCheckbox.checked && filterInput.value.trim()) {
+        statusDiv.textContent = `Filtro activado: "${filterInput.value}" - Mostrando ${videoList.children.length} videos`;
+        statusDiv.className = 'status info';
+    } else if (!filterCheckbox.checked) {
+        statusDiv.textContent = `Filtro desactivado - ${videos.length} videos disponibles`;
+        statusDiv.className = 'status info';
+    }
+});
+        
+        
+        // Función para parsear archivo M3U (sin cambios)
+        function parseM3U(content) {
+            const lines = content.split('\n');
+            const videos = [];
+            let currentTitle = '';
+            let currentUrl = '';
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                if (line.startsWith('#EXTINF:')) {
+                    const lastCommaIndex = line.lastIndexOf(',');
+                    if (lastCommaIndex !== -1) {
+                        currentTitle = line.substring(lastCommaIndex + 1).trim();
+                    }
+                } else if (line.startsWith('http')) {
+                    currentUrl = line;
+                    
+                    if (currentTitle && currentUrl) {
+                        videos.push({
+                            title: currentTitle,
+                            url: currentUrl
+                        });
+                        
+                        currentTitle = '';
+                        currentUrl = '';
+                    }
+                }
+            }
+            
+            return videos;
+        }
+        
+        // Función para limpiar y normalizar títulos (sin cambios)
+        function cleanTitle(title) {
+            let cleanTitle = title.replace(/^[^a-zA-Z0-9]+/, '');
+            
+            if (cleanTitle.length > 40) {
+                cleanTitle = cleanTitle.substring(0, 40) + '...';
+            }
+            
+            return cleanTitle;
+        }
+        
+        // Función para renderizar la lista de videos (actualizada)
+        // Función para renderizar la lista de videos (actualizada con filtro)
+function renderVideoList() {
+    videoList.innerHTML = '';
+    
+    // Aplicar filtro si está activado
+    let videosToShow = videos;
+    if (filterCheckbox.checked && filterInput.value.trim()) {
+        const filterText = filterInput.value.trim().toLowerCase();
+        videosToShow = videos.filter(video => 
+            video.title.toLowerCase().includes(filterText)
+        );
+    }
+    
+    if (videosToShow.length === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.className = 'video-item';
+        
+        if (videos.length === 0) {
+            emptyMsg.textContent = 'No hay videos en la lista';
+        } else if (filterCheckbox.checked && filterInput.value.trim()) {
+            emptyMsg.textContent = `No se encontraron videos con: "${filterInput.value}"`;
+        } else {
+            emptyMsg.textContent = 'No hay videos en la lista';
+        }
+        
+        emptyMsg.style.textAlign = 'center';
+        emptyMsg.style.color = '#999';
+        emptyMsg.style.cursor = 'default';
+        videoList.appendChild(emptyMsg);
+        return;
+    }
+    
+    const sortedVideos = [...videosToShow].sort((a, b) => {
+        const titleA = cleanTitle(a.title).toLowerCase();
+        const titleB = cleanTitle(b.title).toLowerCase();
+        return titleA.localeCompare(titleB);
+    });
+    
+    sortedVideos.forEach((video, index) => {
+        const item = document.createElement('div');
+        item.className = 'video-item';
+        
+        // Añadir clase 'selected' si este video está seleccionado
+        if (video.selected) {
+            item.classList.add('selected');
+        }
+        
+        // Añadir icono según el tipo de plataforma
+        const urlType = getUrlType(video.url);
+        const typeIcon = getPlatformIcon(urlType);
+        
+        item.innerHTML = `
+            <span style="margin-right: 8px;">${typeIcon}</span>
+            ${cleanTitle(video.title)}
+        `;
+        
+        item.title = `${video.title} (${urlType})`;
+        
+        item.addEventListener('click', () => {
+            // Quitar la selección de todos los videos
+            videos.forEach(v => v.selected = false);
+            
+            // Marcar este video como seleccionado
+            video.selected = true;
+            
+            // Guardar en localStorage
+            localStorage.setItem('videoList', JSON.stringify(videos));
+            
+            if (isFireTVConnected) {
+                // Modo Chromecast
+                currentChannelIndex = videos.indexOf(video); // Usar índice original
+                currentSelectedChannel = video;
+                playOnChromecast(video);
+            } else {
+                // Modo servidor local
+                sendToServer(video.url, video.title);
+            }
+            
+            // Re-renderizar la lista para aplicar el estilo
+            renderVideoList();
+        });
+        
+        videoList.appendChild(item);
+    });
+}
+        
+        function getPlatformIcon(urlType) {
+            switch(urlType) {
+                case 'youtube': return 'YT';
+                case 'dailymotion': return 'DM';
+                case 'okru': return 'Ok';
+                case 'tv': return '📡';
+                case 'directo': return '🎥';
+                default: return '🔗';
+            }
+        }
+        
+        // Función para enviar video al servidor (modo local)
+        async function sendToServer(url, title) {
+            const shortTitle = cleanTitle(title);
+            statusDiv.textContent = `Enviando: ${shortTitle}...`;
+            statusDiv.className = 'status info';
+            
+            try {
+                const response = await fetch(`http://${serverConfig.ip}:${serverConfig.port}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    statusDiv.textContent = `✅ Enviado: ${shortTitle} (${result.player})`;
+                    statusDiv.className = 'status success';
+                } else {
+                    statusDiv.textContent = `❌ Error: ${result.message}`;
+                    statusDiv.className = 'status error';
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                statusDiv.className = 'status error';
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
