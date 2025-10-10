@@ -218,10 +218,7 @@
             border-radius: 4px;
             cursor: pointer;
         }
-        .button.enviar-tv-btn {
-    background: #e91e63 !important;
-    color: white !important;
-}
+        
         .modal-button.primary {
             background: #4CAF50;
             color: white;
@@ -631,9 +628,7 @@ let connectionErrorDetected = false;
         tvChannelNumber.style.display = 'none';
     }
 }
-    function openEnviarTv() {
-    window.open('https://yagopc.github.io/Cine/enviaratv.html', '_blank');
-}
+    
     function scrollChannelList(direction) {
         const items = Array.from(channelList.querySelectorAll('.channel-item'));
         const selected = items.findIndex(item => item.classList.contains('selected'));
@@ -2067,7 +2062,7 @@ function updateChannelsDisplayByFilter() {
         });
         
         document.getElementById('copyUrlButton').addEventListener('click', copyCurrentUrl);
-        document.getElementById('enviarTvButton').addEventListener('click', openEnviarTv);
+        
         
         // Reemplazar la función del botón "Limpiar" (antes "Quitar")
         removeButton.addEventListener('click', clearAllData);
@@ -2147,6 +2142,7 @@ if (document.readyState === 'loading') {
     </script>
 </body>
 </html>
+
 
 
 
