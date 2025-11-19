@@ -487,7 +487,6 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script>
-    
     // Variables globales
     let lastPlayedChannel = null;
     let lastPlaybackPosition = 0;
@@ -496,7 +495,7 @@ let connectionErrorDetected = false;
     let navigationEnabled = false;
     let currentChannelIndex = -1;
     let isListExpanded = false;
-    let channelsData = [];
+    let channelsData2 = [];
     let hls = null;
     let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
    
@@ -515,10 +514,6 @@ let connectionErrorDetected = false;
     const DEFAULT_LIST_URL = "https://yagopc.github.io/Cine/Dailymotion.m3u";
     let isUsingDefaultList = false;
     // Elementos del DOM
-    // Configuración del namespace único para esta aplicación
-const APP_NAMESPACE = 'tvagostor_'; // Cambia esto por un nombre único
-
-
     const deleteButton = document.getElementById('deleteButton');
     const toggleNavBtn = document.getElementById('toggleNavBtn');
     const navigationControls = document.getElementById('navigationControls');
@@ -569,7 +564,7 @@ const saveButton = document.getElementById('saveButton');
         }
         
         // Limpiar todas las variables
-        channelsData = [];
+        channelsData2 = [];
         favorites = [];
         selectedChannels = [];
         currentSelectedChannel = null;
@@ -580,7 +575,7 @@ const saveButton = document.getElementById('saveButton');
         repSelecPlaying = false;
         
         // Limpiar todo el localStorage
-        localStorage.removeItem('channelsData');
+        localStorage.removeItem('channelsData2');
         localStorage.removeItem('favorites');
         localStorage.removeItem('lastPlayedChannel');
         localStorage.removeItem('lastPlaybackPosition');
@@ -604,10 +599,6 @@ const saveButton = document.getElementById('saveButton');
         
         alert('Todos los datos han sido limpiados correctamente. Se ha cargado la lista por defecto.');
     }
-    // Función para obtener claves con namespace
-function getNamespacedKey(key) {
-    return APP_NAMESPACE + key;
-}
 
     function toggleSecondaryButtons() {
         if (secondaryButtons.classList.contains('show-secondary')) {
@@ -804,14 +795,14 @@ function updateListVisibility() {
     }
 }
 function saveSimpleM3U() {
-    if (channelsData.length === 0) {
+    if (channelsData2.length === 0) {
         alert('No hay canales para guardar');
         return;
     }
     
     let m3uContent = '#EXTM3U\n';
     
-    channelsData.forEach(channel => {
+    channelsData2.forEach(channel => {
         // Limitar el título a 80 caracteres máximo
         const title = channel.name.length > 80 
             ? channel.name.substring(0, 80) 
@@ -835,7 +826,7 @@ function saveSimpleM3U() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    alert(`Se han guardado ${channelsData.length} canales en formato M3U simplificado`);
+    alert(`Se han guardado ${channelsData2.length} canales en formato M3U simplificado`);
 }
 function toggleInterface() {
     const videoContainer = document.querySelector('.video-container');
@@ -1097,25 +1088,25 @@ function setMode(tv) {
         });
 }
     function saveChannelsData() {
-        localStorage.setItem(getNamespacedKey('channelsData'), JSON.stringify(channelsData));
+        localStorage.setItem('channelsData2', JSON.stringify(channelsData2));
         isUsingDefaultList = false;
     }
     function loadChannelsData() {
         try {
-            const saved = localStorage.getItem('channelsData');
+            const saved = localStorage.getItem('channelsData2');
             if (saved) {
-                channelsData = JSON.parse(saved);
-                if (channelsData && channelsData.length > 0) {
+                channelsData2 = JSON.parse(saved);
+                if (channelsData2 && channelsData2.length > 0) {
                     isUsingDefaultList = false;
                     return true;
                 } else {
-                    channelsData = [];
+                    channelsData2 = [];
                     return false;
                 }
             }
             return false;
         } catch (e) {
-            channelsData = [];
+            channelsData2 = [];
             return false;
         }
     }
@@ -1244,7 +1235,7 @@ function getContentType(url) {
         return;
     }
     
-    const idx = channelsData.findIndex(c => c.url === currentSelectedChannel.url && c.name === currentSelectedChannel.name);
+    const idx = channelsData2.findIndex(c => c.url === currentSelectedChannel.url && c.name === currentSelectedChannel.name);
     if (idx === -1) {
         alert('No se pudo encontrar el canal seleccionado.');
         return;
@@ -1267,14 +1258,13 @@ function getContentType(url) {
             return;
         }
         if (isEditMode && editChannelIndex !== null) {
-            channelsData[editChannelIndex].name = name;
-            channelsData[editChannelIndex].url = url;
+            channelsData2[editChannelIndex].name = name;
+            channelsData2[editChannelIndex].url = url;
             const favIdx = favorites.findIndex(fav => fav.url === currentSelectedChannel.url && fav.name === currentSelectedChannel.name);
             if (favIdx !== -1) {
                 favorites[favIdx].name = name;
                 favorites[favIdx].url = url;
-                localStorage.setItem(getNamespacedKey('favorites'), JSON.stringify(favorites));
-
+                localStorage.setItem('favorites', JSON.stringify(favorites));
             }
             saveChannelsData();
             updateChannelsDisplayByFilter();
@@ -1283,7 +1273,7 @@ function getContentType(url) {
             editChannelIndex = null;
         } else {
             const newChannel = { name, url, group: 'Manual', logo: '' };
-            channelsData.push(newChannel);
+            channelsData2.push(newChannel);
             saveChannelsData();
             updateChannelsDisplayByFilter();
             hideAddChannelModal();
@@ -1398,9 +1388,9 @@ function deleteSelectedChannel() {
         return;
     }
     
-    // Eliminar de channelsData
-    const initialCount = channelsData.length;
-    channelsData = channelsData.filter(ch =>
+    // Eliminar de channelsData2
+    const initialCount = channelsData2.length;
+    channelsData2 = channelsData2.filter(ch =>
         ch.url !== currentSelectedChannel.url || ch.name !== currentSelectedChannel.name
     );
     
@@ -1411,8 +1401,7 @@ function deleteSelectedChannel() {
     
     // Guardar cambios
     saveChannelsData();
-    localStorage.setItem(getNamespacedKey('favorites'), JSON.stringify(favorites));
-
+    localStorage.setItem('favorites', JSON.stringify(favorites));
     
     // Detener reproducción si estaba reproduciendo el canal borrado
     if (hls) { 
@@ -1432,7 +1421,7 @@ function deleteSelectedChannel() {
     // Actualizar interfaz
     updateChannelsDisplayByFilter();
     
-    const removedCount = initialCount - channelsData.length;
+    const removedCount = initialCount - channelsData2.length;
     if (removedCount > 0) {
         alert(`Canal "${channelName}" borrado correctamente.`);
     } else {
@@ -1576,20 +1565,20 @@ function playLastChannel() {
     
     let repetidos = [];
     let added = 0;
-    const existSet = new Set(channelsData.map(c => `${c.name.trim().toLowerCase()}|${c.url.trim()}`));
+    const existSet = new Set(channelsData2.map(c => `${c.name.trim().toLowerCase()}|${c.url.trim()}`));
     
     newChannels.forEach(channel => {
         const clave = `${channel.name.trim().toLowerCase()}|${channel.url.trim()}`;
         if (existSet.has(clave)) {
             repetidos.push(channel.name);
         } else {
-            channelsData.push(channel);
+            channelsData2.push(channel);
             added++;
             existSet.add(clave);
         }
     });
     
-    channelsData.sort((a, b) => {
+    channelsData2.sort((a, b) => {
         const cleanA = a.name.replace(/^[^a-zA-Z0-9]+/, '').toLowerCase();
         const cleanB = b.name.replace(/^[^a-zA-Z0-9]+/, '').toLowerCase();
         return cleanA.localeCompare(cleanB);
@@ -1647,8 +1636,7 @@ function playLastChannel() {
             toggleElement.classList.remove('active');
             toggleElement.textContent = '☆';
         }
-        localStorage.setItem(getNamespacedKey('favorites'), JSON.stringify(favorites));
-
+        localStorage.setItem('favorites', JSON.stringify(favorites));
         if (currentDisplayMode === 'fav') {
             updateChannelsDisplayByFilter();
         }
@@ -1707,7 +1695,7 @@ function playLastChannel() {
                 return response.text();
             })
             .then(content => {
-                channelsData = parseChannelData(content);
+                channelsData2 = parseChannelData(content);
                 isUsingDefaultList = true;
                 updateChannelsDisplayByFilter();
                 currentDisplayMode = 'all';
@@ -1820,9 +1808,9 @@ function playLastChannel() {
     return filteredChannels;
 }
   function cleanupInvalidChannels() {
-    const initialCount = channelsData.length;
-    channelsData = channelsData.filter(channel => !isInvalidChannel(channel));
-    const removedCount = initialCount - channelsData.length;
+    const initialCount = channelsData2.length;
+    channelsData2 = channelsData2.filter(channel => !isInvalidChannel(channel));
+    const removedCount = initialCount - channelsData2.length;
     
     // También limpiar favoritos
     const initialFavCount = favorites.length;
@@ -1839,8 +1827,7 @@ function playLastChannel() {
     }
     
     saveChannelsData();
-    localStorage.setItem(getNamespacedKey('favorites'), JSON.stringify(favorites));
-
+    localStorage.setItem('favorites', JSON.stringify(favorites));
     updateChannelsDisplayByFilter();
     
     alert(`Se eliminaron ${removedCount} canales inválidos y ${removedFavCount} favoritos inválidos.`);
@@ -1991,7 +1978,7 @@ function getSelectedPlatforms() {
     return selectedPlatforms;
 }
 function getCurrentFilteredChannels() {
-    let list = [...channelsData];
+    let list = [...channelsData2];
     
     const selectedPlatforms = getSelectedPlatforms();
     if (selectedPlatforms.length > 0 && !selectedPlatforms.includes('all')) {
@@ -2129,6 +2116,7 @@ if (document.readyState === 'loading') {
     </script>
 </body>
 </html>
+
 
 
 
