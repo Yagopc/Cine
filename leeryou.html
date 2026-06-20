@@ -78,16 +78,21 @@
             document.getElementById('videoThumbnails').innerHTML = '';
         }
 
-        // Función para extraer ID de YouTube de diferentes formatos de URL
-        function extractYouTubeId(url) {
-            // Patrones para diferentes formatos de YouTube
+        // Función para extraer ID de YouTube de diferentes formatos
+        function extractYouTubeId(input) {
+            // Si es solo un ID (formato anterior)
+            if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
+                return input;
+            }
+            
+            // Si es una URL completa
             const patterns = [
                 /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([^&\n?#]+)/,
                 /youtube\.com\/watch\?.*v=([^&\n?#]+)/
             ];
             
             for (let pattern of patterns) {
-                const match = url.match(pattern);
+                const match = input.match(pattern);
                 if (match) {
                     return match[1];
                 }
@@ -95,25 +100,22 @@
             return null;
         }
 
-        // Función para procesar archivos con URLs de YouTube (incluyendo shorts)
-        function processYouTubeUrls(content) {
+        function processYouTubeFile(content) {
             document.getElementById('saveSelectionBtn').style.display = 'inline-block';
             selectedVideos = [];
             const youtubeEmbedUrl = 'https://www.youtube.com/embed/';
+            const youtubeWatchUrl = 'https://www.youtube.com/watch?v=';
             const youtubeThumbnailUrl = 'https://img.youtube.com/vi/';
             const thumbnailsContainer = document.getElementById('videoThumbnails');
             const videoLinkElement = document.getElementById('videoLink');
-            const lines = content.trim().split('\n').filter(line => line.trim().length > 0);
+            const codes = content.split('\n').filter(code => code.trim().length > 0);
             thumbnailsContainer.innerHTML = '';
-            
-            let validVideos = 0;
 
-            lines.forEach(line => {
-                const videoId = extractYouTubeId(line);
+            codes.forEach(code => {
+                const videoId = extractYouTubeId(code.trim());
                 if (videoId) {
                     const container = document.createElement('div');
                     container.className = 'thumbnail-container';
-                    
                     // Checkbox para seleccionar
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
@@ -127,31 +129,24 @@
                             container.classList.remove('selected');
                         }
                     });
-                    
                     // Miniatura
                     const img = document.createElement('img');
                     img.src = `${youtubeThumbnailUrl}${videoId}/0.jpg`;
                     img.alt = `Thumbnail of video ${videoId}`;
-                    img.onclick = function() { playVideo(videoId, line); };
+                    img.onclick = function() { playVideo(videoId); };
                     img.onerror = function() {
                         container.style.display = 'none';
                     };
-                    
                     container.appendChild(checkbox);
                     container.appendChild(img);
                     thumbnailsContainer.appendChild(container);
-                    validVideos++;
                 }
             });
 
-            if (validVideos === 0) {
-                thumbnailsContainer.innerHTML = '<p>No se encontraron IDs de YouTube válidos en el archivo.</p>';
-            }
-
-            function playVideo(videoId, originalUrl) {
+            function playVideo(videoId) {
                 const videoPlayer = document.getElementById('videoPlayer');
                 const iframeContainer = document.getElementById('iframeContainer');
-                const videoUrl = originalUrl || `https://www.youtube.com/watch?v=${videoId}`;
+                const videoUrl = `${youtubeWatchUrl}${videoId}`;
                 iframeContainer.innerHTML = `<iframe width="560" height="315" src="${youtubeEmbedUrl}${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
                 videoPlayer.style.display = 'block';
                 videoLinkElement.innerHTML = `Ver en YouTube: <a href="${videoUrl}" target="_blank">${videoUrl}</a>`;
@@ -191,7 +186,7 @@
             }
         }
 
-        // Función para Dailymotion (sin cambios)
+        // NUEVA FUNCIÓN PARA DAILYMOTION
         function processDailymotionFile(content) {
             document.getElementById('saveSelectionBtn').style.display = 'inline-block';
             selectedVideos = [];
@@ -206,6 +201,7 @@
             codes.forEach(code => {
                 const container = document.createElement('div');
                 container.className = 'thumbnail-container';
+                // Checkbox para seleccionar
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.className = 'thumbnail-checkbox';
@@ -218,6 +214,7 @@
                         container.classList.remove('selected');
                     }
                 });
+                // Miniatura de Dailymotion (puede fallar si el video no existe/publico)
                 const img = document.createElement('img');
                 img.src = `${dailymotionThumbnailUrl}${code}`;
                 img.alt = `Thumbnail of Dailymotion video ${code}`;
@@ -273,7 +270,6 @@
             }
         }
 
-        // Función para CDN5 (sin cambios)
         function processCdn5File(content) {
             document.getElementById('saveSelectionBtn').style.display = 'inline-block';
             selectedVideos = [];
@@ -285,6 +281,7 @@
             codes.forEach(code => {
                 const container = document.createElement('div');
                 container.className = 'thumbnail-container';
+                // Checkbox para seleccionar
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.className = 'thumbnail-checkbox';
@@ -352,8 +349,7 @@
                     if (name.includes("cdn5")) {
                         processCdn5File(content);
                     } else if (name.includes("youtube") || name.includes("short")) {
-                        // Ahora procesa tanto archivos con "youtube" como con "short"
-                        processYouTubeUrls(content);
+                        processYouTubeFile(content);
                     } else if (name.startsWith("dailymotion")) {
                         processDailymotionFile(content);
                     } else {
